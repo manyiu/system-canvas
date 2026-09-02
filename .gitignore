@@ -4,3 +4,7 @@ dist
 *.tsbuildinfo
 .DS_Store
 packages/dsl/src/generated
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
