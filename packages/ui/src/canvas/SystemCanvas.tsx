@@ -44,12 +44,24 @@ function SystemCanvasInner({
 
   const [nodes, setNodes] = useState<Node[]>(flowGraph.nodes);
   const [edges, setEdges] = useState<Edge[]>(flowGraph.edges);
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
   const syncingRef = useRef(false);
   const syncIdRef = useRef(0);
+
+  useEffect(() => {
+    nodesRef.current = nodes;
+  }, [nodes]);
+
+  useEffect(() => {
+    edgesRef.current = edges;
+  }, [edges]);
+
   const positionKey = document.graph.nodes
     .map((node) => `${node.id}:${node.position?.x ?? 0},${node.position?.y ?? 0}`)
     .join("|");
   const graphKey = `${document.graph.id}:${document.graph.channels.length}:${document.graph.nodes.length}:${positionKey}:${selectedStep?.index ?? "none"}`;
+  const fitViewKey = `${document.graph.id}:${document.graph.channels.length}:${document.graph.nodes.length}:${selectedStep?.index ?? "none"}`;
 
   useEffect(() => {
     const syncId = ++syncIdRef.current;
@@ -73,7 +85,7 @@ function SystemCanvasInner({
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [graphKey, fitView, flowGraph.nodes.length, nodesInitialized]);
+  }, [fitViewKey, fitView, flowGraph.nodes.length, nodesInitialized]);
 
   const emitGraphChange = useCallback(
     (nextNodes: Node[], nextEdges: Edge[]) => {
@@ -88,11 +100,11 @@ function SystemCanvasInner({
       if (syncingRef.current) return;
       setNodes((current) => {
         const next = applyNodeChanges(changes, current);
-        emitGraphChange(next, edges);
+        emitGraphChange(next, edgesRef.current);
         return next;
       });
     },
-    [edges, emitGraphChange],
+    [emitGraphChange],
   );
 
   const onEdgesChange = useCallback(
@@ -100,11 +112,11 @@ function SystemCanvasInner({
       if (syncingRef.current) return;
       setEdges((current) => {
         const next = applyEdgeChanges(changes, current);
-        emitGraphChange(nodes, next);
+        emitGraphChange(nodesRef.current, next);
         return next;
       });
     },
-    [nodes, emitGraphChange],
+    [emitGraphChange],
   );
 
   const onConnect: OnConnect = useCallback(
@@ -114,11 +126,11 @@ function SystemCanvasInner({
           { ...connection, type: "channel", id: `ch_${Date.now()}` },
           current,
         );
-        emitGraphChange(nodes, next);
+        emitGraphChange(nodesRef.current, next);
         return next;
       });
     },
-    [nodes, emitGraphChange],
+    [emitGraphChange],
   );
 
   return (
