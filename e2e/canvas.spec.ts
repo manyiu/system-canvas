@@ -118,15 +118,24 @@ test.describe("Architecture Canvas", () => {
     );
   });
 
+  test("shows sync vs async channel styles", async ({ page }) => {
+    const canvas = page.getByTestId("architecture-canvas");
+    await expect(canvas.locator(".react-flow__edge.sc-edge-sync")).toHaveCount(1);
+    await expect(canvas.locator(".react-flow__edge.sc-edge-async")).toHaveCount(2);
+    await expect(canvas.getByText("sync — solid")).toBeVisible();
+    await expect(canvas.getByText("async — dashed")).toBeVisible();
+  });
+
   test("step selection animates active channel edges", async ({ page }) => {
     const canvas = page.getByTestId("architecture-canvas");
 
-    await expect(canvas.locator(".react-flow__edge.animated")).toHaveCount(1);
+    // Dual Write: ch1 is sync — highlighted solid, no dash animation
+    await expect(canvas.locator(".react-flow__edge.sc-edge-sync")).toHaveCount(1);
+    await expect(canvas.locator(".react-flow__edge.animated")).toHaveCount(0);
 
     await page.getByRole("button", { name: /Poller Dispatch/ }).click();
-    await expect(canvas.locator(".react-flow__edge.animated")).toHaveCount(1);
     await expect(
-      canvas.locator('.react-flow__edge[data-id="ch3"].animated'),
+      canvas.locator('.react-flow__edge[data-id="ch3"].sc-edge-async.animated'),
     ).toHaveCount(1);
   });
 
@@ -143,6 +152,67 @@ test.describe("Architecture Canvas", () => {
     await waitForCanvasReady(page, 3);
 
     await expectNodeInCanvas(canvas, "OrderService");
+  });
+
+  test("moving nodes does not corrupt channel labels in DSL", async ({
+    page,
+    context,
+  }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+
+    const canvas = page.getByTestId("architecture-canvas");
+    const node = canvas.locator('.react-flow__node[data-id="OrderService"]');
+    await expect(node).toBeVisible();
+
+    const box = await node.boundingBox();
+    expect(box).not.toBeNull();
+
+    async function readDslFromClipboard() {
+      await page.getByRole("button", { name: "Copy DSL" }).click();
+      return page.evaluate(async () => navigator.clipboard.readText());
+    }
+
+    const initialDsl = await readDslFromClipboard();
+    await waitForClipboardText(page, 'label: "poll"');
+    expect(initialDsl).not.toMatch(/async · poll · async · poll/);
+
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box!.x + 80, box!.y + 40, { steps: 12 });
+    await page.mouse.up();
+
+    await expect
+      .poll(async () => {
+        const dsl = await readDslFromClipboard();
+        const match = dsl.match(/service OrderService \{[^}]*x: (-?\d+)/);
+        return match ? Number(match[1]) : null;
+      })
+      .not.toBe(0);
+
+    const afterDsl = await readDslFromClipboard();
+
+    expect(afterDsl).toContain('label: "poll"');
+    expect(afterDsl).toContain('label: "publish"');
+    expect(afterDsl).not.toMatch(/async · poll · async · poll/);
+    expect(afterDsl).not.toMatch(/async · event · async · event/);
+    expect(afterDsl.length).toBeLessThanOrEqual(initialDsl.length + 120);
+  });
+
+  test("review panel omits outbox rules for other patterns", async ({ page }) => {
+    const reviewPanel = page.getByTestId("review-panel");
+    await expect(reviewPanel).toBeVisible();
+    await expect(reviewPanel.getByText("Architecture Review")).toBeVisible();
+    await expect(reviewPanel.locator(".review-lint-rule")).toHaveCount(0);
+
+    const patternSelect = page.locator(".toolbar-select").first();
+    await patternSelect.selectOption("circuit-breaker");
+    await waitForCanvasReady(page, 2);
+
+    await expect(reviewPanel).toBeVisible();
+    await expect(reviewPanel.locator(".review-lint-rule")).toHaveCount(0);
+    await expect(reviewPanel).not.toContainText("outbox-missing-sync-persist");
+    await expect(reviewPanel).not.toContainText("outbox-missing-async-publish");
+    await expect(reviewPanel).not.toContainText("missing-relationship");
   });
 
   test("step selection keeps canvas rendered", async ({ page }) => {

@@ -5,6 +5,10 @@ import type {
 } from "@system-canvas/core";
 import type { Edge, Node } from "@xyflow/react";
 import { applyVisualDirectives } from "../visuals/apply-directives.js";
+import {
+  formatChannelLabel,
+  shouldAnimateChannel,
+} from "../visuals/flow-styles.js";
 import { graphNeedsLayout, layoutGraph } from "./layout.js";
 
 export interface FlowGraphOptions {
@@ -68,18 +72,36 @@ export function toFlowGraph(
     };
   });
 
-  const edges: Edge[] = graph.channels.map((channel) => ({
-    id: channel.id,
-    source: channel.source,
-    target: channel.target,
-    type: "channel",
-    label: interactionLabels.get(channel.id) ?? channel.label,
-    animated: activeChannels.has(channel.id),
-    data: {
-      payloadType: channel.payloadType,
-      highlighted: activeChannels.has(channel.id),
-    },
-  }));
+  const edges: Edge[] = graph.channels.map((channel) => {
+    const highlighted = activeChannels.has(channel.id);
+    const payloadLabel = interactionLabels.get(channel.id);
+    return {
+      id: channel.id,
+      source: channel.source,
+      target: channel.target,
+      type: "channel",
+      className:
+        channel.delivery === "sync"
+          ? "sc-edge-sync"
+          : channel.delivery === "async"
+            ? "sc-edge-async"
+            : undefined,
+      label: formatChannelLabel(
+        channel.delivery,
+        payloadLabel ?? channel.label,
+        channel.relationship,
+      ),
+      animated: shouldAnimateChannel(channel.delivery, highlighted),
+      data: {
+        channelLabel: channel.label,
+        payloadType: channel.payloadType,
+        delivery: channel.delivery,
+        relationship: channel.relationship,
+        payloadKind: channel.payloadKind,
+        highlighted,
+      },
+    };
+  });
 
   return { nodes, edges, graph };
 }

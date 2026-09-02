@@ -27,8 +27,8 @@ export const circuitBreakerPattern: PatternFactory = {
       }),
       node("Service", "service", "Downstream Service", { icon: "microservice" }),
     ], [
-      { id: "ch1", source: "Client", target: "Gateway" },
-      { id: "ch2", source: "Gateway", target: "Service" },
+      { id: "ch1", source: "Client", target: "Gateway", delivery: "sync" },
+      { id: "ch2", source: "Gateway", target: "Service", delivery: "sync" },
     ]);
 
     const scenario = createScenario("Circuit Breaker States", graph.id, [

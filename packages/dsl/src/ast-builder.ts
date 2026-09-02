@@ -13,6 +13,7 @@ import type {
   SystemNode,
   VisualDirective,
 } from "@system-canvas/core";
+import { parsePayloadKind, parseRelationshipKind } from "@system-canvas/core";
 
 interface ParsedDocument {
   type: "document";
@@ -97,6 +98,11 @@ function channelKey(source: string, target: string): string {
   return `${source}->${target}`;
 }
 
+function parseDelivery(value: unknown): Channel["delivery"] {
+  if (value === "sync" || value === "async") return value;
+  return undefined;
+}
+
 export function buildSystemDocument(parsed: ParsedDocument): SystemDocument {
   const graphId = parsed.name;
   const channelMap = new Map<string, Channel>();
@@ -111,6 +117,9 @@ export function buildSystemDocument(parsed: ParsedDocument): SystemDocument {
       label: typeof ch.attrs.label === "string" ? ch.attrs.label : undefined,
       payloadType:
         typeof ch.attrs.payload === "string" ? ch.attrs.payload : undefined,
+      delivery: parseDelivery(ch.attrs.delivery),
+      relationship: parseRelationshipKind(ch.attrs.relationship),
+      payloadKind: parsePayloadKind(ch.attrs.payloadKind),
     });
   }
 
@@ -134,10 +143,17 @@ export function buildSystemDocument(parsed: ParsedDocument): SystemDocument {
 
   const nodes: SystemNode[] = parsed.nodes.map((n) => {
     const configEntries = Object.entries(n.props).filter(
-      ([k]) => k !== "icon" && k !== "label" && k !== "x" && k !== "y",
+      ([k]) =>
+        k !== "icon" &&
+        k !== "label" &&
+        k !== "x" &&
+        k !== "y" &&
+        k !== "network",
     );
     const x = typeof n.props.x === "number" ? n.props.x : undefined;
     const y = typeof n.props.y === "number" ? n.props.y : undefined;
+    const networkId =
+      typeof n.props.network === "string" ? n.props.network : undefined;
 
     return {
       id: n.id,
@@ -145,6 +161,7 @@ export function buildSystemDocument(parsed: ParsedDocument): SystemDocument {
       label: typeof n.props.label === "string" ? n.props.label : n.id,
       position: x !== undefined && y !== undefined ? { x, y } : undefined,
       state: {},
+      networkId,
       icon: typeof n.props.icon === "string" ? n.props.icon : undefined,
       config: Object.fromEntries(configEntries),
       behaviors: [],

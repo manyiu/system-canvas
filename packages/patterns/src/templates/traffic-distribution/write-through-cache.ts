@@ -24,8 +24,8 @@ export const writeThroughCachePattern: PatternFactory = {
       node("Cache", "database", "Cache", { icon: "redis" }),
       node("DB", "database", "Database", { icon: "postgres" }),
     ], [
-      { id: "ch1", source: "App", target: "Cache" },
-      { id: "ch2", source: "Cache", target: "DB" },
+      { id: "ch1", source: "App", target: "Cache", delivery: "sync" },
+      { id: "ch2", source: "Cache", target: "DB", delivery: "sync" },
     ]);
 
     const scenario = createScenario("Synchronous Write", graph.id, [

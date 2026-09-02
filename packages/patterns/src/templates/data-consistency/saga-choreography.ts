@@ -26,10 +26,10 @@ export const sagaChoreographyPattern: PatternFactory = {
       node("ServiceC", "service", "Shipping Service", { icon: "microservice" }),
       node("EventBus", "queue", "Event Bus", { icon: "kafka" }),
     ], [
-      { id: "ch1", source: "ServiceA", target: "EventBus" },
-      { id: "ch2", source: "EventBus", target: "ServiceB" },
-      { id: "ch3", source: "ServiceB", target: "EventBus" },
-      { id: "ch4", source: "EventBus", target: "ServiceC" },
+      { id: "ch1", source: "ServiceA", target: "EventBus", delivery: "async" },
+      { id: "ch2", source: "EventBus", target: "ServiceB", delivery: "async" },
+      { id: "ch3", source: "ServiceB", target: "EventBus", delivery: "async" },
+      { id: "ch4", source: "EventBus", target: "ServiceC", delivery: "async" },
     ]);
 
     const scenario = createScenario("Choreographed Flow", graph.id, [

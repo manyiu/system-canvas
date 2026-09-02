@@ -24,8 +24,8 @@ export const twoPhaseCommitPattern: PatternFactory = {
       node("DB1", "database", "Participant DB 1", { icon: "postgres" }),
       node("DB2", "database", "Participant DB 2", { icon: "postgres" }),
     ], [
-      { id: "ch1", source: "Coordinator", target: "DB1" },
-      { id: "ch2", source: "Coordinator", target: "DB2" },
+      { id: "ch1", source: "Coordinator", target: "DB1", delivery: "sync" },
+      { id: "ch2", source: "Coordinator", target: "DB2", delivery: "sync" },
     ]);
 
     const scenario = createScenario("2PC Vote", graph.id, [

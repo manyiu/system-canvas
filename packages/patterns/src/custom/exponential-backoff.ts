@@ -24,8 +24,8 @@ export function createExponentialBackoff(
     node("Service", "service", "Target Service", { icon: "microservice" }),
     node("DLQ", "queue", "Dead Letter Queue", { icon: "kafka" }),
   ], [
-    { id: "ch1", source: "Client", target: "Service", label: "request" },
-    { id: "ch2", source: "Service", target: "DLQ", label: "dead letter" },
+    { id: "ch1", source: "Client", target: "Service", label: "request", delivery: "sync" },
+    { id: "ch2", source: "Service", target: "DLQ", label: "dead letter", delivery: "async" },
   ]);
 
   const steps = [];

@@ -28,8 +28,8 @@ export const cdcPattern: PatternFactory = {
       node("Debezium", "service", "Debezium Connector", { icon: "microservice" }),
       node("Kafka", "queue", "Kafka", { icon: "kafka" }),
     ], [
-      { id: "ch1", source: "SourceDB", target: "Debezium", label: "tail log" },
-      { id: "ch2", source: "Debezium", target: "Kafka", label: "stream" },
+      { id: "ch1", source: "SourceDB", target: "Debezium", label: "tail log", delivery: "async" },
+      { id: "ch2", source: "Debezium", target: "Kafka", label: "stream", delivery: "async" },
     ]);
 
     const scenario = createScenario("CDC Stream", graph.id, [

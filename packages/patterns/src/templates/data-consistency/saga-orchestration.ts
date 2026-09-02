@@ -27,9 +27,9 @@ export const sagaOrchestrationPattern: PatternFactory = {
       node("ServiceC", "service", "Shipping Service", { icon: "microservice" }),
       node("DLQ", "queue", "Dead Letter Queue", { icon: "kafka" }),
     ], [
-      { id: "ch1", source: "Orchestrator", target: "ServiceA" },
-      { id: "ch2", source: "Orchestrator", target: "ServiceB" },
-      { id: "ch3", source: "Orchestrator", target: "ServiceC" },
+      { id: "ch1", source: "Orchestrator", target: "ServiceA", delivery: "sync" },
+      { id: "ch2", source: "Orchestrator", target: "ServiceB", delivery: "sync" },
+      { id: "ch3", source: "Orchestrator", target: "ServiceC", delivery: "sync" },
     ]);
 
     const scenario = createScenario("Saga Happy Path + Compensation", graph.id, [

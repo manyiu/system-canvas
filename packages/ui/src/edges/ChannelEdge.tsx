@@ -1,4 +1,11 @@
 import { BaseEdge, getBezierPath, type EdgeProps } from "@xyflow/react";
+import { getChannelEdgeStyle } from "../visuals/flow-styles.js";
+
+export interface ChannelEdgeData {
+  highlighted?: boolean;
+  delivery?: "sync" | "async";
+  payloadType?: string;
+}
 
 export function ChannelEdge({
   id,
@@ -12,7 +19,8 @@ export function ChannelEdge({
   data,
   markerEnd,
 }: EdgeProps) {
-  const edgeData = (data ?? {}) as { highlighted?: boolean };
+  const edgeData = (data ?? {}) as ChannelEdgeData;
+  const style = getChannelEdgeStyle(edgeData.delivery, edgeData.highlighted ?? false);
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
@@ -31,9 +39,11 @@ export function ChannelEdge({
       labelX={labelX}
       labelY={labelY}
       style={{
-        stroke: edgeData.highlighted ? "#22c55e" : "#64748b",
-        strokeWidth: edgeData.highlighted ? 2.5 : 1.5,
+        stroke: style.stroke,
+        strokeWidth: style.strokeWidth,
+        strokeDasharray: style.strokeDasharray,
       }}
+      interactionWidth={20}
     />
   );
 }

@@ -57,6 +57,7 @@ function serializeNode(node: SystemNode): string {
 
   if (node.icon) props.icon = node.icon;
   if (node.label !== node.id) props.label = node.label;
+  if (node.networkId) props.network = node.networkId;
   if (node.position) {
     props.x = node.position.x;
     props.y = node.position.y;
@@ -69,6 +70,9 @@ function serializeChannel(channel: Channel): string {
   const props: Record<string, unknown> = {};
   if (channel.label) props.label = channel.label;
   if (channel.payloadType) props.payload = channel.payloadType;
+  if (channel.delivery) props.delivery = channel.delivery;
+  if (channel.relationship) props.relationship = channel.relationship;
+  if (channel.payloadKind) props.payloadKind = channel.payloadKind;
   return `channel ${channel.id} ${channel.source} -> ${channel.target}${formatProps(props)}`;
 }
 

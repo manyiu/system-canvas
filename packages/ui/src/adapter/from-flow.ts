@@ -1,5 +1,16 @@
 import type { Channel, SystemGraph, SystemNode } from "@system-canvas/core";
+import { stripChannelLabelPrefix } from "@system-canvas/core";
 import type { Edge, Node } from "@xyflow/react";
+
+function normalizeChannelLabel(
+  label: string | undefined,
+  delivery?: Channel["delivery"],
+  relationship?: Channel["relationship"],
+): string | undefined {
+  if (!label) return undefined;
+  const normalized = stripChannelLabelPrefix(label, delivery, relationship);
+  return normalized || undefined;
+}
 
 function makeId(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
@@ -28,6 +39,7 @@ export function applyFlowChanges(
       label: data.label ?? existing?.label ?? flowNode.id,
       position: flowNode.position,
       state: existing?.state ?? {},
+      networkId: existing?.networkId,
       icon: data.icon ?? existing?.icon,
       config: data.config ?? existing?.config ?? {},
       ports: data.ports ?? existing?.ports,
@@ -39,12 +51,26 @@ export function applyFlowChanges(
 
   const channels: Channel[] = flowEdges.map((edge) => {
     const existing = graph.channels.find((c) => c.id === edge.id);
+    const edgeData = (edge.data ?? {}) as {
+      channelLabel?: string;
+      delivery?: Channel["delivery"];
+      relationship?: Channel["relationship"];
+      payloadKind?: Channel["payloadKind"];
+    };
+    const delivery = edgeData.delivery ?? existing?.delivery;
+    const relationship = edgeData.relationship ?? existing?.relationship;
+    const rawLabel = edgeData.channelLabel ?? existing?.label;
+
     return {
       id: edge.id,
       source: edge.source,
       target: edge.target,
-      label: typeof edge.label === "string" ? edge.label : existing?.label,
+      // React Flow edge.label is display-only (delivery · relationship · label).
+      label: normalizeChannelLabel(rawLabel, delivery, relationship),
       payloadType: existing?.payloadType,
+      delivery,
+      relationship,
+      payloadKind: edgeData.payloadKind ?? existing?.payloadKind,
       metadata: existing?.metadata,
     };
   });

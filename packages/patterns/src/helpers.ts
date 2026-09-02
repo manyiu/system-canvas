@@ -63,8 +63,9 @@ export function createGraph(
   version: string,
   nodes: SystemNode[],
   channels: SystemGraph["channels"] = [],
+  networks: SystemGraph["networks"] = [],
 ): SystemGraph {
-  return { id, name, version, nodes, channels };
+  return { id, name, version, nodes, channels, networks };
 }
 
 export function createDocument(

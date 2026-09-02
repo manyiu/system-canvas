@@ -27,10 +27,10 @@ export const cqrsPattern: PatternFactory = {
       node("ReadDB", "database", "Read DB (NoSQL)", { icon: "mongodb" }),
       node("QueryAPI", "service", "Query API", { icon: "microservice" }),
     ], [
-      { id: "ch1", source: "CommandAPI", target: "WriteDB" },
-      { id: "ch2", source: "WriteDB", target: "EventBus" },
-      { id: "ch3", source: "EventBus", target: "ReadDB" },
-      { id: "ch4", source: "QueryAPI", target: "ReadDB" },
+      { id: "ch1", source: "CommandAPI", target: "WriteDB", delivery: "sync" },
+      { id: "ch2", source: "WriteDB", target: "EventBus", delivery: "async" },
+      { id: "ch3", source: "EventBus", target: "ReadDB", delivery: "async" },
+      { id: "ch4", source: "QueryAPI", target: "ReadDB", delivery: "sync" },
     ]);
 
     const scenario = createScenario("CQRS Write + Read", graph.id, [

@@ -27,8 +27,8 @@ export const rateLimitingPattern: PatternFactory = {
       }),
       node("Service", "service", "Backend Service", { icon: "microservice" }),
     ], [
-      { id: "ch1", source: "Client", target: "Gateway" },
-      { id: "ch2", source: "Gateway", target: "Service" },
+      { id: "ch1", source: "Client", target: "Gateway", delivery: "sync" },
+      { id: "ch2", source: "Gateway", target: "Service", delivery: "sync" },
     ]);
 
     const scenario = createScenario("Token Bucket", graph.id, [

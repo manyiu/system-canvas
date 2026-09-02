@@ -135,6 +135,10 @@ function SystemCanvasInner({
 
   return (
     <div className="sc-canvas-root" data-testid="architecture-canvas">
+      <div className="sc-flow-legend" aria-label="Flow delivery legend">
+        <span className="sc-legend-item sc-legend-sync">sync — solid, call &amp; wait</span>
+        <span className="sc-legend-item sc-legend-async">async — dashed, message / event</span>
+      </div>
       <ReactFlow
         nodes={nodes}
         edges={edges}
