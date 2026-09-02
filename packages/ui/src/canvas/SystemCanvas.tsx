@@ -18,7 +18,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ExecutionStep, SystemDocument, SystemGraph } from "@system-canvas/core";
+import type { ExecutionResult, SystemDocument, SystemGraph } from "@system-canvas/core";
 import { applyFlowChanges } from "../adapter/from-flow.js";
 import { toFlowGraph } from "../adapter/to-flow.js";
 import { edgeTypes } from "../edges/ChannelEdge.js";
@@ -26,20 +26,20 @@ import { nodeTypes } from "../nodes/index.js";
 
 export interface SystemCanvasProps {
   document: SystemDocument;
-  selectedStep?: ExecutionStep | null;
+  executionResult?: ExecutionResult | null;
   onGraphChange: (graph: SystemGraph) => void;
 }
 
 function SystemCanvasInner({
   document,
-  selectedStep,
+  executionResult,
   onGraphChange,
 }: SystemCanvasProps) {
   const { fitView } = useReactFlow();
   const nodesInitialized = useNodesInitialized();
   const flowGraph = useMemo(
-    () => toFlowGraph(document, { selectedStep, autoLayout: false }),
-    [document, selectedStep],
+    () => toFlowGraph(document, { executionResult, autoLayout: false }),
+    [document, executionResult],
   );
 
   const [nodes, setNodes] = useState<Node[]>(flowGraph.nodes);
@@ -60,8 +60,8 @@ function SystemCanvasInner({
   const positionKey = document.graph.nodes
     .map((node) => `${node.id}:${node.position?.x ?? 0},${node.position?.y ?? 0}`)
     .join("|");
-  const graphKey = `${document.graph.id}:${document.graph.channels.length}:${document.graph.nodes.length}:${positionKey}:${selectedStep?.index ?? "none"}`;
-  const fitViewKey = `${document.graph.id}:${document.graph.channels.length}:${document.graph.nodes.length}:${selectedStep?.index ?? "none"}`;
+  const graphKey = `${document.graph.id}:${document.graph.channels.length}:${document.graph.nodes.length}:${positionKey}:${executionResult?.step.index ?? "none"}`;
+  const fitViewKey = `${document.graph.id}:${document.graph.channels.length}:${document.graph.nodes.length}:${executionResult?.step.index ?? "none"}`;
 
   useEffect(() => {
     const syncId = ++syncIdRef.current;

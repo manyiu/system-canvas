@@ -118,6 +118,25 @@ test.describe("Architecture Canvas", () => {
     );
   });
 
+  test("step selection animates active channel edges", async ({ page }) => {
+    const canvas = page.getByTestId("architecture-canvas");
+
+    await expect(canvas.locator(".react-flow__edge.animated")).toHaveCount(1);
+
+    await page.getByRole("button", { name: /Poller Dispatch/ }).click();
+    await expect(canvas.locator(".react-flow__edge.animated")).toHaveCount(1);
+    await expect(
+      canvas.locator('.react-flow__edge[data-id="ch3"].animated'),
+    ).toHaveCount(1);
+  });
+
+  test("step selection highlights port visuals", async ({ page }) => {
+    await page.getByRole("button", { name: /Dual Write/ }).click();
+
+    const outboxPort = page.locator(".sc-port-chip", { hasText: "Outbox Table" });
+    await expect(outboxPort).toHaveClass(/sc-port-chip-active/);
+  });
+
   test("auto layout keeps nodes visible", async ({ page }) => {
     const canvas = page.getByTestId("architecture-canvas");
     await page.getByRole("button", { name: "Auto Layout" }).click();

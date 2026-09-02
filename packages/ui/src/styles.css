@@ -48,10 +48,17 @@
 
 .sc-port-chip {
   background: #334155;
+  border: 1px solid transparent;
   border-radius: 4px;
   padding: 2px 6px;
   font-size: 10px;
   color: #cbd5e1;
+  transition: border-color 0.2s, box-shadow 0.2s, color 0.2s;
+}
+
+.sc-port-chip-active {
+  background: #1e293b;
+  font-weight: 600;
 }
 
 .sc-node-badge {

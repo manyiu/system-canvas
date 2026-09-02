@@ -1,10 +1,14 @@
-import type { ExecutionStep, SystemDocument, SystemGraph } from "@system-canvas/core";
+import type {
+  ExecutionResult,
+  SystemDocument,
+  SystemGraph,
+} from "@system-canvas/core";
 import type { Edge, Node } from "@xyflow/react";
 import { applyVisualDirectives } from "../visuals/apply-directives.js";
 import { graphNeedsLayout, layoutGraph } from "./layout.js";
 
 export interface FlowGraphOptions {
-  selectedStep?: ExecutionStep | null;
+  executionResult?: ExecutionResult | null;
   autoLayout?: boolean;
 }
 
@@ -23,7 +27,26 @@ export function toFlowGraph(
     graph = layoutGraph(graph);
   }
 
-  const { nodeStyles } = applyVisualDirectives(options.selectedStep?.visuals);
+  const step = options.executionResult?.step;
+  const { nodeStyles, portStyles } = applyVisualDirectives(step?.visuals, graph);
+  const activeChannels = new Set(options.executionResult?.activeChannelIds ?? []);
+  const interactionLabels = new Map(
+    (options.executionResult?.resolvedInteractions ?? []).flatMap((interaction) => {
+      const src =
+        typeof interaction.source === "string"
+          ? interaction.source
+          : interaction.source.nodeId;
+      const tgt =
+        typeof interaction.target === "string"
+          ? interaction.target
+          : interaction.target.nodeId;
+      const channel = graph.channels.find(
+        (c) => c.source === src && c.target === tgt,
+      );
+      if (!channel || !interaction.payload) return [];
+      return [[channel.id, interaction.payload.type] as const];
+    }),
+  );
 
   const nodes: Node[] = graph.nodes.map((node, index) => {
     const visual = nodeStyles.get(node.id);
@@ -35,37 +58,22 @@ export function toFlowGraph(
         label: node.label,
         kind: node.kind,
         icon: node.icon,
-        ports: node.ports ?? [],
+        ports: (node.ports ?? []).map((port) => ({
+          ...port,
+          visual: portStyles.get(port.id),
+        })),
         config: node.config ?? {},
         visual,
       },
     };
   });
 
-  const activeChannels = new Set<string>();
-  if (options.selectedStep) {
-    for (const interaction of options.selectedStep.interactions) {
-      const src =
-        typeof interaction.source === "string"
-          ? interaction.source
-          : interaction.source.nodeId;
-      const tgt =
-        typeof interaction.target === "string"
-          ? interaction.target
-          : interaction.target.nodeId;
-      const match = graph.channels.find(
-        (c) => c.source === src && c.target === tgt,
-      );
-      if (match) activeChannels.add(match.id);
-    }
-  }
-
   const edges: Edge[] = graph.channels.map((channel) => ({
     id: channel.id,
     source: channel.source,
     target: channel.target,
     type: "channel",
-    label: channel.label,
+    label: interactionLabels.get(channel.id) ?? channel.label,
     animated: activeChannels.has(channel.id),
     data: {
       payloadType: channel.payloadType,

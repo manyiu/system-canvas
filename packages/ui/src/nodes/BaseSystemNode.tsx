@@ -6,7 +6,7 @@ export interface SystemNodeData {
   label: string;
   kind: string;
   icon?: string;
-  ports?: { id: string; label: string }[];
+  ports?: { id: string; label: string; visual?: NodeVisualStyle }[];
   config?: Record<string, unknown>;
   visual?: NodeVisualStyle;
 }
@@ -47,8 +47,22 @@ export function BaseSystemNode({ data, selected }: NodeProps) {
       {(nodeData.ports ?? []).length > 0 && (
         <div className="sc-node-ports">
           {nodeData.ports!.map((port) => (
-            <span key={port.id} className="sc-port-chip">
-              {port.label}
+            <span
+              key={port.id}
+              className={`sc-port-chip${port.visual ? " sc-port-chip-active" : ""}`}
+              style={
+                port.visual
+                  ? {
+                      border: `1px solid ${port.visual.borderColor}`,
+                      boxShadow: `0 0 8px ${port.visual.borderColor}55`,
+                      color: port.visual.borderColor,
+                    }
+                  : undefined
+              }
+            >
+              {port.visual?.badge && port.visual.badge !== port.label
+                ? port.visual.badge
+                : port.label}
             </span>
           ))}
         </div>

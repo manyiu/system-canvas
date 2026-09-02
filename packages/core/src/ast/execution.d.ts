@@ -40,5 +40,8 @@ export interface ExecutionResult {
     step: ExecutionStep;
     traces: PacketTrace[];
     snapshot?: StateSnapshot;
+    /** Resolved from step.interactions or derived emit primitives; used for payload labels in 3c. */
+    resolvedInteractions: StepInteraction[];
+    activeChannelIds: string[];
 }
 //# sourceMappingURL=execution.d.ts.map

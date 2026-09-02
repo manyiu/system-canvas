@@ -105,7 +105,12 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
   },
 
   selectStep: (index) => {
-    set({ selectedStepIndex: index, syncSource: "init" });
+    const scenario = get().document.scenarios[get().selectedScenarioIndex];
+    const maxIndex = Math.max(0, (scenario?.steps.length ?? 1) - 1);
+    set({
+      selectedStepIndex: Math.min(Math.max(0, index), maxIndex),
+      syncSource: "init",
+    });
   },
 
   resetSkipDslParse: () => {
