@@ -1,0 +1,28 @@
+{
+  "name": "@system-canvas/dsl",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "build:grammar": "peggy --format es -o src/generated/parser.ts src/grammar/system.peggy",
+    "build": "pnpm run build:grammar && tsdown",
+    "clean": "rm -rf dist src/generated",
+    "dev": "pnpm run build:grammar && tsdown --watch"
+  },
+  "dependencies": {
+    "@system-canvas/core": "workspace:*"
+  },
+  "devDependencies": {
+    "peggy": "5.1.0",
+    "tsdown": "0.22.14",
+    "typescript": "7.0.2"
+  }
+}

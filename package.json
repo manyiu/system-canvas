@@ -1,0 +1,20 @@
+{
+  "name": "system-canvas",
+  "private": true,
+  "packageManager": "pnpm@12.2.1",
+  "engines": {
+    "node": ">=24.20.0",
+    "pnpm": ">=12.2.1"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "26.4.0",
+    "prettier": "3.9.6",
+    "turbo": "2.10.12",
+    "typescript": "7.0.2"
+  }
+}
