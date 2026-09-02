@@ -9,6 +9,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:app": "turbo run dev --filter=@system-canvas/app...",
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {

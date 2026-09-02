@@ -1,0 +1,30 @@
+{
+  "name": "@system-canvas/app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "4.7.0",
+    "@system-canvas/core": "workspace:*",
+    "@system-canvas/dsl": "workspace:*",
+    "@system-canvas/patterns": "workspace:*",
+    "@system-canvas/ui": "workspace:*",
+    "@xyflow/react": "12.11.6",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zustand": "5.0.15"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.8",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.1.1",
+    "typescript": "7.0.2",
+    "vite": "8.2.2"
+  }
+}

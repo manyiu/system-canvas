@@ -1,0 +1,186 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  flex-shrink: 0;
+}
+
+.toolbar-brand {
+  font-weight: 700;
+  font-size: 15px;
+  color: #38bdf8;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbar-label,
+.timeline-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.toolbar-select {
+  background: #0f172a;
+  color: #e2e8f0;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.toolbar-btn {
+  background: #334155;
+  color: #e2e8f0;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.toolbar-btn:hover {
+  background: #475569;
+}
+
+.toolbar-btn.primary {
+  background: #0284c7;
+}
+
+.toolbar-btn.primary:hover {
+  background: #0ea5e9;
+}
+
+.main-panels {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 45fr 4px 55fr;
+}
+
+.panel-left,
+.panel-right {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panel-divider {
+  background: #334155;
+  cursor: col-resize;
+}
+
+.panel-divider:hover {
+  background: #38bdf8;
+}
+
+.pane-header {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+
+.dsl-editor-pane,
+.canvas-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.dsl-editor-pane .monaco-editor {
+  flex: 1;
+}
+
+.parse-error {
+  padding: 6px 12px;
+  background: #450a0a;
+  color: #fca5a5;
+  font-size: 12px;
+  border-bottom: 1px solid #7f1d1d;
+}
+
+.step-timeline {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  background: #1e293b;
+  border-top: 1px solid #334155;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.step-timeline.empty {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.step-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.step-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #0f172a;
+  color: #cbd5e1;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.step-btn.active {
+  border-color: #38bdf8;
+  background: #0c4a6e;
+  color: #e0f2fe;
+}
+
+.step-pattern {
+  font-size: 10px;
+  padding: 1px 5px;
+  background: #334155;
+  border-radius: 4px;
+  color: #94a3b8;
+}
