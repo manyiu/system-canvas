@@ -50,7 +50,7 @@ export const twoPhaseCommitPattern: PatternFactory = {
           { kind: "signal", targetId: "DB2", color: "red", label: "Abort" },
         ],
       }),
-    ]);
+    ], "2pc-default");
 
     return createDocument(graph, [scenario]);
   },

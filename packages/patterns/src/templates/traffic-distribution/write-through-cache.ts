@@ -36,7 +36,7 @@ export const writeThroughCachePattern: PatternFactory = {
           { kind: "signal", targetId: "DB", color: "green", label: "Write" },
         ],
       }),
-    ]);
+    ], "write-through-cache-default");
 
     return createDocument(graph, [scenario]);
   },

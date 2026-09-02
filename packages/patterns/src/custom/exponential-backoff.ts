@@ -75,6 +75,11 @@ export function createExponentialBackoff(
     }),
   );
 
-  const scenario = createScenario("Exponential Backoff Retry", graph.id, steps);
+  const scenario = createScenario(
+    "Exponential Backoff Retry",
+    graph.id,
+    steps,
+    "exponential-backoff-default",
+  );
   return createDocument(graph, [scenario]);
 }

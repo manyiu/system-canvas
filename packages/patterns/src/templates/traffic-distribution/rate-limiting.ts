@@ -45,7 +45,7 @@ export const rateLimitingPattern: PatternFactory = {
           { kind: "bounce", targetId: "Gateway", color: "red", label: "Rate limited" },
         ],
       }),
-    ]);
+    ], "rate-limiting-default");
 
     return createDocument(graph, [scenario]);
   },

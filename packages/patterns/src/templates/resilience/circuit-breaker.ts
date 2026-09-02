@@ -51,7 +51,7 @@ export const circuitBreakerPattern: PatternFactory = {
           { kind: "signal", targetId: "Gateway", color: "yellow", label: "Half-Open" },
         ],
       }),
-    ]);
+    ], "circuit-breaker-default");
 
     return createDocument(graph, [scenario]);
   },

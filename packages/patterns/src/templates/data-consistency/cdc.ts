@@ -57,7 +57,7 @@ export const cdcPattern: PatternFactory = {
           { kind: "signal", targetId: "Kafka", color: "green" },
         ],
       }),
-    ]);
+    ], "cdc-default");
 
     return createDocument(graph, [scenario]);
   },

@@ -34,7 +34,10 @@ export const outboxPattern: PatternFactory = {
       { id: "ch3", source: "Poller", target: "Kafka", label: "publish" },
     ]);
 
-    const scenario = createScenario("Transactional Outbox", graph.id, [
+    const scenario = createScenario(
+      "Transactional Outbox",
+      graph.id,
+      [
       createStep(0, "Dual Write", {
         pattern: "outbox",
         primitives: [{
@@ -60,7 +63,7 @@ export const outboxPattern: PatternFactory = {
           { kind: "signal", targetId: "Kafka", color: "green" },
         ],
       }),
-    ]);
+    ], "outbox-default");
 
     return createDocument(graph, [scenario]);
   },

@@ -63,7 +63,7 @@ export const sagaChoreographyPattern: PatternFactory = {
           { kind: "signal", targetId: "ServiceA", color: "red", state: "compensating" },
         ],
       }),
-    ]);
+    ], "saga-choreography-default");
 
     return createDocument(graph, [scenario]);
   },

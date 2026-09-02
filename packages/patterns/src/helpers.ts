@@ -46,9 +46,10 @@ export function createScenario(
   name: string,
   graphId: string,
   steps: ExecutionStep[],
+  id?: string,
 ): Scenario {
   return {
-    id: makeId("scenario"),
+    id: id ?? makeId("scenario"),
     name,
     graphId,
     initialState: {},

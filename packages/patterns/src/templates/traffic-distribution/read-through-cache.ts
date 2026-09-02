@@ -47,7 +47,7 @@ export const readThroughCachePattern: PatternFactory = {
           { kind: "highlight", targetId: "Cache", color: "green", label: "Populated" },
         ],
       }),
-    ]);
+    ], "read-through-cache-default");
 
     return createDocument(graph, [scenario]);
   },

@@ -194,7 +194,7 @@ Version
   = v:Identifier { return v; }
 
 Identifier
-  = [a-zA-Z_][a-zA-Z0-9_]* { return text(); }
+  = [a-zA-Z_][a-zA-Z0-9_-]* { return text(); }
 
 StringLiteral
   = "\"" chars:DoubleStringChar* "\"" { return chars.join(""); }

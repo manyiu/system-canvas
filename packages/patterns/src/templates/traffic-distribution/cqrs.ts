@@ -60,7 +60,7 @@ export const cqrsPattern: PatternFactory = {
         pattern: "cqrs",
         visuals: [{ kind: "signal", targetId: "QueryAPI", color: "green" }],
       }),
-    ]);
+    ], "cqrs-default");
 
     return createDocument(graph, [scenario]);
   },
