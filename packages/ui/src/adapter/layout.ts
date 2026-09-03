@@ -35,5 +35,6 @@ export function layoutGraph(graph: SystemGraph): SystemGraph {
 }
 
 export function graphNeedsLayout(graph: SystemGraph): boolean {
-  return graph.nodes.some((n) => !n.position);
+  if (graph.nodes.length === 0) return false;
+  return graph.nodes.every((n) => !n.position);
 }

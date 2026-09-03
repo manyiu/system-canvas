@@ -103,11 +103,10 @@ body,
 
 .panel-divider {
   background: #334155;
-  cursor: col-resize;
 }
 
 .panel-divider:hover {
-  background: #38bdf8;
+  background: #475569;
 }
 
 .pane-header {
@@ -233,20 +232,229 @@ body,
   border-bottom: 1px solid #7f1d1d;
 }
 
-.step-timeline {
+.step-timeline.empty,
+.playback-panel.empty {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.examples-menu {
+  position: relative;
+}
+
+.examples-menu-trigger {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.examples-menu-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.examples-menu-trigger::after {
+  content: " ▾";
+  opacity: 0.7;
+}
+
+.examples-menu-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 100;
+  min-width: 260px;
+  max-height: 360px;
+  overflow-y: auto;
+  background: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 40%);
+  padding: 6px 0;
+}
+
+.examples-menu-group-label {
+  padding: 6px 12px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+}
+
+.examples-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #e2e8f0;
+  font-size: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.examples-menu-item:hover {
+  background: #1e293b;
+}
+
+.examples-menu-item.active {
+  background: #0c4a6e;
+  color: #e0f2fe;
+}
+
+.examples-menu-footer {
+  border-top: 1px solid #334155;
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.examples-menu-reload {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.examples-menu-reload:hover:not(:disabled) {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+.examples-menu-reload:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.playback-panel {
   display: flex;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  gap: 6px;
   padding: 8px 16px;
   background: #1e293b;
   border-top: 1px solid #334155;
   flex-shrink: 0;
-  overflow-x: auto;
 }
 
-.step-timeline.empty {
-  color: #64748b;
+.playback-panel.empty {
+  padding: 8px 16px;
+  background: #1e293b;
+  border-top: 1px solid #334155;
+}
+
+.playback-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.playback-row-primary {
+  flex-wrap: wrap;
+}
+
+.playback-row-steps {
+  overflow-x: auto;
+  padding-top: 2px;
+}
+
+.current-step-title {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e0f2fe;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+
+.step-list-expand {
   font-size: 12px;
+  color: #94a3b8;
+}
+
+.step-list-expand summary {
+  cursor: pointer;
+  user-select: none;
+  padding: 2px 0;
+}
+
+.step-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  background: #0f172a;
+}
+
+.step-list-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #1e293b;
+  color: #cbd5e1;
+  font-size: 12px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.step-list-item:last-child {
+  border-bottom: none;
+}
+
+.step-list-item:hover {
+  background: #1e293b;
+}
+
+.step-list-item.active {
+  background: #0c4a6e;
+  color: #e0f2fe;
+}
+
+.scenario-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.scenario-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.scenario-chip {
+  background: #0f172a;
+  color: #cbd5e1;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.scenario-chip:hover {
+  border-color: #64748b;
+  color: #e2e8f0;
+}
+
+.scenario-chip.active {
+  border-color: #38bdf8;
+  background: #0c4a6e;
+  color: #e0f2fe;
 }
 
 .timeline-transport {

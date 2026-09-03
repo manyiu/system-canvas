@@ -33,6 +33,11 @@ async function waitForClipboardText(page: Page, substring: string) {
     .toContain(substring);
 }
 
+async function selectExample(page: Page, id: string) {
+  await page.getByTestId("examples-menu-trigger").click();
+  await page.getByTestId(`example-item-${id}`).click();
+}
+
 test.describe("Architecture Canvas", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
@@ -103,11 +108,10 @@ test.describe("Architecture Canvas", () => {
     expect(dsl).toContain("channel ch3 Poller -> Kafka");
   });
 
-  test("switching patterns updates the canvas", async ({ page }) => {
+  test("switching templates updates the canvas", async ({ page }) => {
     const canvas = page.getByTestId("architecture-canvas");
-    const patternSelect = page.locator(".toolbar-select").first();
 
-    await patternSelect.selectOption("circuit-breaker");
+    await selectExample(page, "circuit-breaker");
     await waitForCanvasReady(page, 2);
 
     for (const nodeId of CIRCUIT_BREAKER_NODES) {
@@ -116,6 +120,90 @@ test.describe("Architecture Canvas", () => {
     await expect(canvas.locator('.react-flow__node[data-id="OrderService"]')).toHaveCount(
       0,
     );
+  });
+
+  test("examples menu shows current example and reload", async ({ page }) => {
+    await expect(page.getByTestId("examples-menu-trigger")).toContainText(
+      "Transactional Outbox",
+    );
+    await page.getByTestId("examples-menu-trigger").click();
+    await expect(page.getByTestId("example-item-outbox")).toHaveClass(/active/);
+    await expect(page.getByTestId("reload-example")).toBeEnabled();
+  });
+
+  test("clicking active example does not reset document", async ({ page }) => {
+    const canvas = page.getByTestId("architecture-canvas");
+    const node = canvas.locator('.react-flow__node[data-id="OrderService"]');
+    const box = await node.boundingBox();
+    expect(box).not.toBeNull();
+
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box!.x + 80, box!.y + 40, { steps: 12 });
+    await page.mouse.up();
+
+    await expect
+      .poll(async () => {
+        const next = await node.boundingBox();
+        return next ? Math.round(next.x) : null;
+      })
+      .not.toBe(Math.round(box!.x));
+
+    const movedX = Math.round((await node.boundingBox())!.x);
+
+    await page.getByTestId("examples-menu-trigger").click();
+    await page.getByTestId("example-item-outbox").click();
+
+    await expect
+      .poll(async () => {
+        const next = await node.boundingBox();
+        return next ? Math.round(next.x) : null;
+      })
+      .toBe(movedX);
+  });
+
+  test("shows current step title in playback row", async ({ page }) => {
+    const title = page.getByTestId("current-step-title");
+    await expect(title).toBeVisible();
+    await expect(title).toContainText("Dual Write");
+    await page.getByRole("button", { name: /Poller Dispatch/ }).click();
+    await expect(title).toContainText("Poller Dispatch");
+  });
+
+  test("shows all outbox scenarios as chips", async ({ page }) => {
+    const strip = page.getByTestId("scenario-strip");
+    await expect(strip.getByTestId("scenario-chip-outbox-happy-path")).toBeVisible();
+    await expect(strip.getByTestId("scenario-chip-outbox-kafka-down")).toBeVisible();
+    await expect(
+      strip.getByTestId("scenario-chip-outbox-duplicate-publish"),
+    ).toBeVisible();
+    await expect(
+      strip.getByTestId("scenario-chip-outbox-happy-path"),
+    ).toHaveAttribute("aria-selected", "true");
+  });
+
+  test("template load aligns nodes without Auto Layout", async ({ page }) => {
+    const canvas = page.getByTestId("architecture-canvas");
+    await selectExample(page, "circuit-breaker");
+    await waitForCanvasReady(page, 2);
+
+    const boxes = await Promise.all(
+      CIRCUIT_BREAKER_NODES.map(async (nodeId) => {
+        const box = await canvas
+          .locator(`.react-flow__node[data-id="${nodeId}"]`)
+          .boundingBox();
+        expect(box).not.toBeNull();
+        return box!;
+      }),
+    );
+
+    // LR dagre layout: nodes should not share a diagonal stagger (x and y both ascending).
+    const xs = boxes.map((b) => b.x);
+    const ys = boxes.map((b) => b.y);
+    const xSpread = Math.max(...xs) - Math.min(...xs);
+    const ySpread = Math.max(...ys) - Math.min(...ys);
+    expect(xSpread).toBeGreaterThan(40);
+    expect(ySpread).toBeLessThan(xSpread);
   });
 
   test("shows sync vs async channel styles", async ({ page }) => {
@@ -204,8 +292,7 @@ test.describe("Architecture Canvas", () => {
     await expect(reviewPanel.getByText("Architecture Review")).toBeVisible();
     await expect(reviewPanel.locator(".review-lint-rule")).toHaveCount(0);
 
-    const patternSelect = page.locator(".toolbar-select").first();
-    await patternSelect.selectOption("circuit-breaker");
+    await selectExample(page, "circuit-breaker");
     await waitForCanvasReady(page, 2);
 
     await expect(reviewPanel).toBeVisible();
@@ -284,17 +371,18 @@ test.describe("Architecture Canvas", () => {
     await timeline.getByTestId("playback-step-forward").click();
     await expect(timeline.getByTestId("playback-step-label")).toHaveText("2/2");
 
-    const scenarioSelect = timeline.getByTestId("scenario-select");
-    const options = scenarioSelect.locator("option");
-    const optionCount = await options.count();
-    expect(optionCount).toBeGreaterThan(1);
+    const chips = timeline.getByTestId("scenario-strip").locator(".scenario-chip");
+    expect(await chips.count()).toBeGreaterThan(1);
 
-    await scenarioSelect.selectOption({ index: 1 });
+    await timeline.getByTestId("scenario-chip-outbox-kafka-down").click();
     await expect(timeline.getByTestId("playback-step-label")).toHaveText(/1\//);
     await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute(
       "aria-label",
       "Play",
     );
+    await expect(
+      timeline.getByTestId("scenario-chip-outbox-kafka-down"),
+    ).toHaveAttribute("aria-selected", "true");
   });
 
   test("Dual Write shows payload packet on OrderService → DB", async ({

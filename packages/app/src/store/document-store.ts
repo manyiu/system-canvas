@@ -4,8 +4,8 @@ import type {
   SystemDocument,
   SystemGraph,
 } from "@system-canvas/core";
-import { getPattern } from "@system-canvas/patterns";
-import { layoutGraph } from "@system-canvas/ui";
+import { getPattern, listPatterns } from "@system-canvas/patterns";
+import { graphNeedsLayout, layoutGraph } from "@system-canvas/ui";
 import { create } from "zustand";
 
 export type SyncSource = "dsl" | "canvas" | "pattern" | "init";
@@ -15,6 +15,8 @@ interface DocumentStore {
   dslText: string;
   parseError: string | null;
   syncSource: SyncSource;
+  /** Currently loaded template id, or null when the document diverged via DSL. */
+  loadedPatternId: string | null;
   selectedScenarioIndex: number;
   selectedStepIndex: number;
   playbackState: PlaybackState;
@@ -59,14 +61,37 @@ function clampStepIndex(index: number, stepCount: number): number {
   return Math.min(Math.max(0, index), stepCount - 1);
 }
 
-const initialDoc = getPattern("outbox");
+function ensureLaidOut(document: SystemDocument): SystemDocument {
+  if (!graphNeedsLayout(document.graph)) return document;
+  return { ...document, graph: layoutGraph(document.graph) };
+}
+
+function scenarioIndexForPattern(
+  document: SystemDocument,
+  patternId: string,
+): number {
+  const meta = listPatterns().find((p) => p.id === patternId);
+  if (!meta) return 0;
+  const index = document.scenarios.findIndex(
+    (s) => s.id === meta.defaultScenarioId,
+  );
+  return index >= 0 ? index : 0;
+}
+
+const initialPatternId = "outbox";
+const initialDoc = ensureLaidOut(getPattern(initialPatternId));
+const initialScenarioIndex = scenarioIndexForPattern(
+  initialDoc,
+  initialPatternId,
+);
 
 export const useDocumentStore = create<DocumentStore>((set, get) => ({
   document: initialDoc,
   dslText: serializeDsl(initialDoc),
   parseError: null,
   syncSource: "init",
-  selectedScenarioIndex: 0,
+  loadedPatternId: initialPatternId,
+  selectedScenarioIndex: initialScenarioIndex,
   selectedStepIndex: 0,
   playbackState: "idle",
   playbackSpeed: 1,
@@ -74,12 +99,15 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
 
   setFromDsl: (text) => {
     try {
-      const document = parseDsl(text);
+      const parsed = parseDsl(text);
+      const needsLayout = graphNeedsLayout(parsed.graph);
+      const document = ensureLaidOut(parsed);
       set({
         document,
-        dslText: text,
+        dslText: needsLayout ? serializeDsl(document) : text,
         parseError: null,
         syncSource: "dsl",
+        loadedPatternId: null,
         skipNextDslParse: false,
         selectedScenarioIndex: 0,
         selectedStepIndex: 0,
@@ -108,10 +136,11 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
   },
 
   loadPattern: (id) => {
-    const document = getPattern(id);
+    const document = ensureLaidOut(getPattern(id));
     set({
       ...withSerializedDsl(document, "pattern"),
-      selectedScenarioIndex: 0,
+      loadedPatternId: id,
+      selectedScenarioIndex: scenarioIndexForPattern(document, id),
       selectedStepIndex: 0,
       playbackState: "idle",
     });
