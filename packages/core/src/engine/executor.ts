@@ -7,8 +7,13 @@ import {
   deriveInteractions,
 } from "./step-resolution.js";
 
-function makeTraceId(): string {
-  return `trace_${Math.random().toString(36).slice(2, 9)}`;
+function makeTraceId(
+  stepIndex: number,
+  channelId: string,
+  payloadId: string,
+  sequence: number,
+): string {
+  return `${stepIndex}:${channelId}:${payloadId}:${sequence}`;
 }
 
 function applyMutate(
@@ -74,6 +79,7 @@ export function createExecutor(): Executor {
       foldPriorMutates(nodeStates, scenario, stepIndex);
 
       const traces: PacketTrace[] = [];
+      let emitSequence = 0;
 
       for (const primitive of step.primitives) {
         if (primitive.kind === "mutate") {
@@ -92,9 +98,32 @@ export function createExecutor(): Executor {
             }
             continue;
           }
+          const sequence = emitSequence++;
+          let payload = primitive.payload;
+          const animation =
+            step.animations?.[sequence] ??
+            (emitSequence === 1 ? step.animations?.[0] : undefined);
+          if (animation?.payload) {
+            payload = {
+              ...payload,
+              type: animation.payload.type || payload.type,
+              data: { ...payload.data, ...animation.payload.data },
+              headers: {
+                ...payload.headers,
+                ...animation.payload.headers,
+              },
+              correlationId:
+                animation.payload.correlationId ?? payload.correlationId,
+            };
+          }
           traces.push({
-            id: makeTraceId(),
-            payload: primitive.payload,
+            id: makeTraceId(
+              stepIndex,
+              primitive.channelId,
+              payload.id,
+              sequence,
+            ),
+            payload,
             channelId: primitive.channelId,
             sourceNodeId: channel.source,
             targetNodeId: channel.target,

@@ -4,7 +4,7 @@ Interactive visualization for distributed system architecture, data flow, and in
 
 ## Vision
 
-System Canvas helps architects and engineers **see** how distributed patterns work. Define topology and execution scenarios in a declarative DSL or a drag-and-drop React Flow canvas with **bidirectional sync**, then play or scrub through step-by-step visual highlights (payload animation in Step 3c).
+System Canvas helps architects and engineers **see** how distributed patterns work. Define topology and execution scenarios in a declarative DSL or a drag-and-drop React Flow canvas with **bidirectional sync**, then play or scrub through step-by-step visual highlights and payload packets on channels.
 
 ## Architecture
 
@@ -162,8 +162,8 @@ system OrderFlow v1 {
 | --- | --- |
 | **Step 1** | Monorepo, AST, DSL parser, pattern library |
 | **Step 2** | React Flow UI, Vite demo, bidirectional DSL ↔ canvas sync |
-| **Step 3** (current) | Execution engine + timeline playback (3b done); payload animation (3c pending) |
-| **Step 4** | Custom pattern behavioral DSL (`pattern { onEvent ... }`) |
+| **Step 3** | Execution engine + timeline playback + payload animation on channels |
+| **Step 4** (next) | Custom pattern behavioral DSL (`pattern { onEvent ... }`) |
 
 ## License
 

@@ -14,6 +14,8 @@ export function CanvasPane() {
   const document = useDocumentStore((s) => s.document);
   const selectedScenarioIndex = useDocumentStore((s) => s.selectedScenarioIndex);
   const selectedStepIndex = useDocumentStore((s) => s.selectedStepIndex);
+  const playbackSpeed = useDocumentStore((s) => s.playbackSpeed);
+  const playbackState = useDocumentStore((s) => s.playbackState);
   const setFromCanvas = useDocumentStore((s) => s.setFromCanvas);
 
   const executionResult = useMemo(() => {
@@ -34,6 +36,8 @@ export function CanvasPane() {
       <SystemCanvas
         document={document}
         executionResult={executionResult}
+        playbackSpeed={playbackSpeed}
+        playbackState={playbackState}
         onGraphChange={setFromCanvas}
       />
     </div>

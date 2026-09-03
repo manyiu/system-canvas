@@ -296,4 +296,55 @@ test.describe("Architecture Canvas", () => {
       "Play",
     );
   });
+
+  test("Dual Write shows payload packet on OrderService → DB", async ({
+    page,
+  }) => {
+    const canvas = page.getByTestId("architecture-canvas");
+    await page.getByRole("button", { name: /Dual Write/ }).click();
+
+    const packet = canvas.getByTestId("payload-packet");
+    await expect(packet).toBeVisible();
+    await expect(packet).toHaveAttribute("data-channel-id", "ch1");
+    await expect(packet).toHaveAttribute("data-payload-type", "PlaceOrder");
+    await expect(
+      canvas.locator('.react-flow__edge[data-id="ch1"].sc-edge-sync'),
+    ).toHaveCount(1);
+  });
+
+  test("Poller Dispatch shows payload packet on Poller → Kafka", async ({
+    page,
+  }) => {
+    const canvas = page.getByTestId("architecture-canvas");
+    await page.getByRole("button", { name: /Poller Dispatch/ }).click();
+
+    const packet = canvas.getByTestId("payload-packet");
+    await expect(packet).toBeVisible();
+    await expect(packet).toHaveAttribute("data-channel-id", "ch3");
+    await expect(packet).toHaveAttribute("data-payload-type", "OrderCreated");
+    await expect(
+      canvas.locator('.react-flow__edge[data-id="ch3"].sc-edge-async.animated'),
+    ).toHaveCount(1);
+  });
+
+  test("scrubbing swaps payload packet between steps", async ({ page }) => {
+    const canvas = page.getByTestId("architecture-canvas");
+    const timeline = page.getByTestId("step-timeline");
+
+    await timeline.getByTestId("playback-step-forward").click();
+    await expect(canvas.getByTestId("payload-packet")).toHaveAttribute(
+      "data-channel-id",
+      "ch3",
+    );
+
+    await timeline.getByRole("button", { name: /Dual Write/ }).click();
+    await expect(canvas.getByTestId("payload-packet")).toHaveAttribute(
+      "data-channel-id",
+      "ch1",
+    );
+    await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute(
+      "aria-label",
+      "Play",
+    );
+  });
 });

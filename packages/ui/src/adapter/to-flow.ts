@@ -1,5 +1,6 @@
 import type {
   ExecutionResult,
+  PlaybackState,
   SystemDocument,
   SystemGraph,
 } from "@system-canvas/core";
@@ -9,11 +10,14 @@ import {
   formatChannelLabel,
   shouldAnimateChannel,
 } from "../visuals/flow-styles.js";
+import { buildPacketFlights } from "../edges/packet-flight.js";
 import { graphNeedsLayout, layoutGraph } from "./layout.js";
 
 export interface FlowGraphOptions {
   executionResult?: ExecutionResult | null;
   autoLayout?: boolean;
+  playbackSpeed?: number;
+  playbackState?: PlaybackState;
 }
 
 export interface FlowGraph {
@@ -52,6 +56,10 @@ export function toFlowGraph(
     }),
   );
 
+  const traces = options.executionResult?.traces ?? [];
+  const playbackSpeed = options.playbackSpeed ?? 1;
+  const playbackState = options.playbackState ?? "idle";
+
   const nodes: Node[] = graph.nodes.map((node, index) => {
     const visual = nodeStyles.get(node.id);
     return {
@@ -75,6 +83,13 @@ export function toFlowGraph(
   const edges: Edge[] = graph.channels.map((channel) => {
     const highlighted = activeChannels.has(channel.id);
     const payloadLabel = interactionLabels.get(channel.id);
+    const packets = buildPacketFlights(
+      traces,
+      channel.id,
+      channel.delivery,
+      playbackSpeed,
+      playbackState,
+    );
     return {
       id: channel.id,
       source: channel.source,
@@ -94,11 +109,12 @@ export function toFlowGraph(
       animated: shouldAnimateChannel(channel.delivery, highlighted),
       data: {
         channelLabel: channel.label,
-        payloadType: channel.payloadType,
+        payloadType: payloadLabel ?? channel.payloadType,
         delivery: channel.delivery,
         relationship: channel.relationship,
         payloadKind: channel.payloadKind,
         highlighted,
+        packets,
       },
     };
   });

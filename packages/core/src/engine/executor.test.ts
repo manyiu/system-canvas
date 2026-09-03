@@ -101,6 +101,46 @@ describe("createExecutor cumulative state", () => {
     });
     assert.equal(at1.traces.length, 1);
     assert.equal(at1.traces[0]?.channelId, "ch1");
+    assert.equal(at1.traces[0]?.id, "1:ch1:p1:0");
+  });
+
+  it("uses stable trace ids and merges step animations into emit payloads", () => {
+    const scenario: Scenario = {
+      id: "s1",
+      name: "Happy",
+      graphId: "test",
+      initialState: {},
+      steps: [
+        {
+          ...emptyStep(0, "Step0", [
+            {
+              kind: "emit",
+              nodeId: "A",
+              channelId: "ch1",
+              payload: { id: "p0", type: "PlaceOrder", data: { orderId: 1 } },
+            },
+          ]),
+          animations: [
+            {
+              payload: {
+                id: "ignored",
+                type: "PlaceOrder",
+                data: { status: "PENDING" },
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    const first = createExecutor().executeStep(graph, scenario, 0);
+    const second = createExecutor().executeStep(graph, scenario, 0);
+    assert.equal(first.traces[0]?.id, "0:ch1:p0:0");
+    assert.equal(first.traces[0]?.id, second.traces[0]?.id);
+    assert.deepEqual(first.traces[0]?.payload.data, {
+      orderId: 1,
+      status: "PENDING",
+    });
   });
 
   it("emits only for the active step and skips unknown channels", () => {

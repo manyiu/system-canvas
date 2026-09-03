@@ -128,3 +128,34 @@
   color: #e2e8f0;
   pointer-events: all;
 }
+
+.sc-packet {
+  pointer-events: none;
+}
+
+.sc-packet-dot {
+  stroke: #0f172a;
+  stroke-width: 1.5;
+}
+
+.sc-packet-dot-sync {
+  fill: #60a5fa;
+}
+
+.sc-packet-dot-async {
+  fill: #fbbf24;
+}
+
+.sc-packet-label-bg {
+  fill: #1e293b;
+  stroke: #475569;
+  stroke-width: 1;
+  opacity: 0.95;
+}
+
+.sc-packet-label {
+  fill: #e2e8f0;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+}
