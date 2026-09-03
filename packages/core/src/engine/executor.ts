@@ -1,5 +1,6 @@
 import type { ExecutionResult, Scenario } from "../ast/execution.js";
 import type { PacketTrace } from "../ast/payload.js";
+import type { Primitive } from "../ast/primitives.js";
 import type { SystemGraph } from "../ast/system.js";
 import {
   activeChannelIdsFromStep,
@@ -8,6 +9,47 @@ import {
 
 function makeTraceId(): string {
   return `trace_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function applyMutate(
+  nodeStates: Record<string, Record<string, unknown>>,
+  primitive: Extract<Primitive, { kind: "mutate" }>,
+): void {
+  nodeStates[primitive.nodeId] = {
+    ...nodeStates[primitive.nodeId],
+    ...primitive.patch,
+  };
+}
+
+function seedNodeStates(
+  graph: SystemGraph,
+  scenario: Scenario,
+): Record<string, Record<string, unknown>> {
+  const nodeStates: Record<string, Record<string, unknown>> = {};
+  for (const node of graph.nodes) {
+    nodeStates[node.id] = {
+      ...(scenario.initialState[node.id] ?? {}),
+      ...node.state,
+    };
+  }
+  return nodeStates;
+}
+
+/** Fold mutate patches from steps [0, beforeIndex). */
+function foldPriorMutates(
+  nodeStates: Record<string, Record<string, unknown>>,
+  scenario: Scenario,
+  beforeIndex: number,
+): void {
+  for (let i = 0; i < beforeIndex; i++) {
+    const prior = scenario.steps[i];
+    if (!prior) continue;
+    for (const primitive of prior.primitives) {
+      if (primitive.kind === "mutate") {
+        applyMutate(nodeStates, primitive);
+      }
+    }
+  }
 }
 
 export interface Executor {
@@ -28,24 +70,14 @@ export function createExecutor(): Executor {
         );
       }
 
-      // Per-step execution: each step starts from initialState + node.state.
-      // Phase 3b will fold prior step snapshots for cumulative simulation.
-      const nodeStates: Record<string, Record<string, unknown>> = {};
-      for (const node of graph.nodes) {
-        nodeStates[node.id] = {
-          ...(scenario.initialState[node.id] ?? {}),
-          ...node.state,
-        };
-      }
+      const nodeStates = seedNodeStates(graph, scenario);
+      foldPriorMutates(nodeStates, scenario, stepIndex);
 
       const traces: PacketTrace[] = [];
 
       for (const primitive of step.primitives) {
         if (primitive.kind === "mutate") {
-          nodeStates[primitive.nodeId] = {
-            ...nodeStates[primitive.nodeId],
-            ...primitive.patch,
-          };
+          applyMutate(nodeStates, primitive);
         }
 
         if (primitive.kind === "emit") {

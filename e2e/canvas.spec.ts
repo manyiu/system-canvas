@@ -222,4 +222,78 @@ test.describe("Architecture Canvas", () => {
     await expectNodeInCanvas(canvas, "DB");
     await expect(canvas.locator(".react-flow__edge")).toHaveCount(3);
   });
+
+  test("play advances steps automatically", async ({ page }) => {
+    const timeline = page.getByTestId("step-timeline");
+    await expect(timeline.getByTestId("playback-step-label")).toHaveText("1/2");
+
+    await timeline.getByTestId("playback-speed").selectOption("2");
+    await timeline.getByTestId("playback-play-pause").click();
+
+    await expect(timeline.getByTestId("playback-step-label")).toHaveText("2/2", {
+      timeout: 3_000,
+    });
+    await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute(
+      "aria-label",
+      "Play",
+    );
+  });
+
+  test("pause stops auto-advance", async ({ page }) => {
+    const timeline = page.getByTestId("step-timeline");
+    await timeline.getByTestId("playback-speed").selectOption("0.5");
+    await timeline.getByTestId("playback-play-pause").click();
+    await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute(
+      "aria-label",
+      "Pause",
+    );
+
+    await timeline.getByTestId("playback-play-pause").click();
+    await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute(
+      "aria-label",
+      "Play",
+    );
+
+    const label = await timeline.getByTestId("playback-step-label").textContent();
+    await page.waitForTimeout(1_200);
+    await expect(timeline.getByTestId("playback-step-label")).toHaveText(
+      label ?? "",
+    );
+  });
+
+  test("scrubber and step buttons seek and pause playback", async ({ page }) => {
+    const canvas = page.getByTestId("architecture-canvas");
+    const timeline = page.getByTestId("step-timeline");
+
+    await timeline.getByTestId("playback-step-forward").click();
+    await expect(timeline.getByTestId("playback-step-label")).toHaveText("2/2");
+    await expect(
+      canvas.locator('.react-flow__edge[data-id="ch3"].sc-edge-async.animated'),
+    ).toHaveCount(1);
+
+    await timeline.getByRole("button", { name: /Dual Write/ }).click();
+    await expect(timeline.getByTestId("playback-step-label")).toHaveText("1/2");
+    await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute(
+      "aria-label",
+      "Play",
+    );
+  });
+
+  test("scenario switch resets playback to step 1", async ({ page }) => {
+    const timeline = page.getByTestId("step-timeline");
+    await timeline.getByTestId("playback-step-forward").click();
+    await expect(timeline.getByTestId("playback-step-label")).toHaveText("2/2");
+
+    const scenarioSelect = timeline.getByTestId("scenario-select");
+    const options = scenarioSelect.locator("option");
+    const optionCount = await options.count();
+    expect(optionCount).toBeGreaterThan(1);
+
+    await scenarioSelect.selectOption({ index: 1 });
+    await expect(timeline.getByTestId("playback-step-label")).toHaveText(/1\//);
+    await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute(
+      "aria-label",
+      "Play",
+    );
+  });
 });

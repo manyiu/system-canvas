@@ -4,7 +4,7 @@ Interactive visualization for distributed system architecture, data flow, and in
 
 ## Vision
 
-System Canvas helps architects and engineers **see** how distributed patterns work. Define topology and execution scenarios in a declarative DSL or a drag-and-drop React Flow canvas with **bidirectional sync**, then scrub through step-by-step visual highlights (full animation in Step 3).
+System Canvas helps architects and engineers **see** how distributed patterns work. Define topology and execution scenarios in a declarative DSL or a drag-and-drop React Flow canvas with **bidirectional sync**, then play or scrub through step-by-step visual highlights (payload animation in Step 3c).
 
 ## Architecture
 
@@ -22,7 +22,7 @@ DSL text / Pattern templates
 
 | Package | Description |
 | --- | --- |
-| `@system-canvas/core` | AST types, primitives, visual directives, engine/timeline stubs |
+| `@system-canvas/core` | AST types, primitives, visual directives, executor + timeline |
 | `@system-canvas/dsl` | Peggy parser + compiler (`parseDsl()`, `serializeDsl()`) |
 | `@system-canvas/patterns` | 10 built-in pattern templates + custom pattern POC |
 | `@system-canvas/ui` | React Flow canvas, adapters, visual directive styling |
@@ -161,8 +161,8 @@ system OrderFlow v1 {
 | Step | Scope |
 | --- | --- |
 | **Step 1** | Monorepo, AST, DSL parser, pattern library |
-| **Step 2** (current) | React Flow UI, Vite demo, bidirectional DSL ↔ canvas sync |
-| **Step 3** | Execution engine + timeline scrubber + payload animation |
+| **Step 2** | React Flow UI, Vite demo, bidirectional DSL ↔ canvas sync |
+| **Step 3** (current) | Execution engine + timeline playback (3b done); payload animation (3c pending) |
 | **Step 4** | Custom pattern behavioral DSL (`pattern { onEvent ... }`) |
 
 ## License
