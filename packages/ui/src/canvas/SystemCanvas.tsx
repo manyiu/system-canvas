@@ -28,6 +28,7 @@ import { applyFlowChanges } from "../adapter/from-flow.js";
 import { toFlowGraph } from "../adapter/to-flow.js";
 import { edgeTypes } from "../edges/ChannelEdge.js";
 import { nodeTypes } from "../nodes/index.js";
+import { NetworkSwimlanesOverlay } from "./NetworkSwimlanes.js";
 
 export interface SystemCanvasProps {
   document: SystemDocument;
@@ -166,6 +167,7 @@ function SystemCanvasInner({
         minZoom={0.2}
         maxZoom={2}
       >
+        <NetworkSwimlanesOverlay graph={document.graph} />
         <Background gap={16} color="#334155" />
         <Controls />
         <MiniMap nodeColor="#475569" maskColor="rgb(15 23 42 / 70%)" />

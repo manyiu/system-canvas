@@ -538,3 +538,42 @@ body,
   border-radius: 4px;
   color: #94a3b8;
 }
+
+.sc-swimlanes-panel {
+  pointer-events: none;
+  z-index: 0;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.sc-swimlanes-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.sc-swimlane-rect {
+  fill: rgb(30 41 59 / 35%);
+  stroke: #475569;
+  stroke-width: 1;
+  stroke-dasharray: 6 4;
+}
+
+.sc-swimlane-label {
+  fill: #64748b;
+  font-size: 11px;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+.sc-handle-top {
+  top: -4px;
+}
+
+.sc-handle-bottom {
+  bottom: -4px;
+}

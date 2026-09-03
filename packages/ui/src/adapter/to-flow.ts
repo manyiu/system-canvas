@@ -12,6 +12,7 @@ import {
 } from "../visuals/flow-styles.js";
 import { buildPacketFlights } from "../edges/packet-flight.js";
 import { graphNeedsLayout, layoutGraph } from "./layout.js";
+import { resolveChannelHandles } from "./resolve-handles.js";
 
 export interface FlowGraphOptions {
   executionResult?: ExecutionResult | null;
@@ -80,6 +81,8 @@ export function toFlowGraph(
     };
   });
 
+  const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
+
   const edges: Edge[] = graph.channels.map((channel) => {
     const highlighted = activeChannels.has(channel.id);
     const payloadLabel = interactionLabels.get(channel.id);
@@ -90,10 +93,22 @@ export function toFlowGraph(
       playbackSpeed,
       playbackState,
     );
+    const sourceNode = nodeById.get(channel.source);
+    const targetNode = nodeById.get(channel.target);
+    const { sourceHandle, targetHandle } = resolveChannelHandles(
+      sourceNode ?? {},
+      targetNode ?? {},
+      {
+        sourceHandle: channel.sourceHandle,
+        targetHandle: channel.targetHandle,
+      },
+    );
     return {
       id: channel.id,
       source: channel.source,
       target: channel.target,
+      sourceHandle,
+      targetHandle,
       type: "channel",
       className:
         channel.delivery === "sync"

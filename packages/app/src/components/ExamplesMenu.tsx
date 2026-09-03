@@ -1,35 +1,38 @@
 import { useRef } from "react";
-import { groupPatternsByCategory, patternDisplayName } from "../lib/pattern-groups.js";
+import {
+  exampleDisplayName,
+  groupExamplesByDifficulty,
+} from "../lib/example-groups.js";
 import { useDocumentStore } from "../store/document-store.js";
 
 export function ExamplesMenu() {
   const detailsRef = useRef<HTMLDetailsElement>(null);
-  const loadPattern = useDocumentStore((s) => s.loadPattern);
-  const loadedPatternId = useDocumentStore((s) => s.loadedPatternId);
-  const groups = groupPatternsByCategory();
-  const currentLabel = patternDisplayName(loadedPatternId);
+  const loadExample = useDocumentStore((s) => s.loadExample);
+  const loadedExampleId = useDocumentStore((s) => s.loadedExampleId);
+  const groups = groupExamplesByDifficulty();
+  const currentLabel = exampleDisplayName(loadedExampleId);
 
   const closeMenu = () => {
     if (detailsRef.current) detailsRef.current.open = false;
   };
 
   const selectExample = (id: string) => {
-    if (id === loadedPatternId) {
+    if (id === loadedExampleId) {
       closeMenu();
       return;
     }
-    loadPattern(id);
+    loadExample(id);
     closeMenu();
   };
 
   const reloadExample = () => {
-    if (!loadedPatternId) return;
-    const name = patternDisplayName(loadedPatternId);
+    if (!loadedExampleId) return;
+    const name = exampleDisplayName(loadedExampleId);
     const ok = window.confirm(
       `Reload "${name}"? Any edits to this example will be lost.`,
     );
     if (ok) {
-      loadPattern(loadedPatternId);
+      loadExample(loadedExampleId);
       closeMenu();
     }
   };
@@ -41,18 +44,19 @@ export function ExamplesMenu() {
       </summary>
       <div className="examples-menu-panel" role="menu">
         {groups.map((group) => (
-          <div key={group.category} className="examples-menu-group">
+          <div key={group.difficulty} className="examples-menu-group">
             <div className="examples-menu-group-label">{group.label}</div>
-            {group.patterns.map((p) => (
+            {group.examples.map((ex) => (
               <button
-                key={p.id}
+                key={ex.id}
                 type="button"
                 role="menuitem"
-                className={`examples-menu-item ${p.id === loadedPatternId ? "active" : ""}`}
-                onClick={() => selectExample(p.id)}
-                data-testid={`example-item-${p.id}`}
+                className={`examples-menu-item ${ex.id === loadedExampleId ? "active" : ""}`}
+                onClick={() => selectExample(ex.id)}
+                data-testid={`example-item-${ex.id}`}
+                title={ex.patternsUsed.join(", ")}
               >
-                {p.name}
+                {ex.name}
               </button>
             ))}
           </div>
@@ -61,7 +65,7 @@ export function ExamplesMenu() {
           <button
             type="button"
             className="examples-menu-reload"
-            disabled={loadedPatternId === null}
+            disabled={loadedExampleId === null}
             onClick={reloadExample}
             data-testid="reload-example"
           >

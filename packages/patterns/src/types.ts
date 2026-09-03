@@ -1,16 +1,9 @@
-import type { PatternCategory } from "@system-canvas/core";
+import type { ExampleMeta } from "@system-canvas/core";
 
-export type { PatternCategory };
+export type { ExampleMeta, ExampleDifficulty, LayoutHint } from "@system-canvas/core";
 
 export interface PatternFactory {
   id: string;
-  meta: {
-    id: string;
-    name: string;
-    category: PatternCategory;
-    description: string;
-    tags: string[];
-    defaultScenarioId: string;
-  };
+  meta: ExampleMeta;
   create: () => import("@system-canvas/core").SystemDocument;
 }

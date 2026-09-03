@@ -88,14 +88,27 @@ console.log(doc.graph.nodes);   // [{ id: "OrderService", ... }, ...]
 console.log(doc.scenarios[0].steps[0].primitives); // compiled emit/mutate primitives
 ```
 
-### Load a built-in pattern
+### Load a built-in example
 
 ```typescript
-import { getPattern, listPatterns } from "@system-canvas/patterns";
+import { getExample, listExamples } from "@system-canvas/patterns";
 
-const outbox = getPattern("outbox");
-const all = listPatterns(); // 10 built-in + exponential-backoff POC
+const bitly = getExample("bitly");
+const all = listExamples(); // 35 Hello Interview examples
 ```
+
+## Hello Interview Examples
+
+Examples are grouped by difficulty in the **Examples** menu:
+
+| Difficulty | Count | Sample problems |
+| --- | --- | --- |
+| Easy | 4 | Bitly, Dropbox, Yelp, Local Delivery |
+| Medium | 16 | Ticketmaster, FB News Feed, WhatsApp, Rate Limiter, YouTube, Notification System |
+| Hard | 11 | Uber, Web Crawler, Payment System, ChatGPT |
+| More Practice | 4 | Game Leaderboard, GitHub Actions |
+
+Each example combines multiple services, caches, queues, and failure scenarios with step-by-step playback.
 
 ## DSL Cheat Sheet
 
@@ -131,30 +144,13 @@ system OrderFlow v1 {
 | --- | --- |
 | `system Name v1` | Whole architecture document |
 | `service` / `queue` / `database` | Node types on the canvas |
-| `port Node.port` | Sub-component (e.g. outbox table) |
+| `port Node.port` | Sub-component (e.g. token bucket on gateway) |
 | `scenario "..."` | Simulation script |
 | `step "..."` | One timeline frame |
 
-## Built-in Patterns
+## Example Catalog
 
-### Data Consistency & Messaging
-- `outbox` — Transactional Outbox
-- `cdc` — Change Data Capture
-- `saga-orchestration` — Saga (Orchestration)
-- `saga-choreography` — Saga (Choreography)
-- `two-phase-commit` — Two-Phase Commit
-
-### Resilience & Fault Tolerance
-- `circuit-breaker` — Circuit Breaker
-
-### Traffic & Data Distribution
-- `rate-limiting` — Token Bucket Rate Limiting
-- `read-through-cache` — Read-Through Cache
-- `write-through-cache` — Write-Through Cache
-- `cqrs` — CQRS
-
-### Custom (POC)
-- `exponential-backoff` — Retry with exponential backoff → DLQ
+See the **Examples** menu in the app for the full Hello Interview catalog (35 composite system design problems).
 
 ## Roadmap
 

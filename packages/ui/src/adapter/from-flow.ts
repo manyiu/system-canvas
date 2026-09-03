@@ -1,4 +1,4 @@
-import type { Channel, SystemGraph, SystemNode } from "@system-canvas/core";
+import type { Channel, HandlePosition, SystemGraph, SystemNode } from "@system-canvas/core";
 import { stripChannelLabelPrefix } from "@system-canvas/core";
 import type { Edge, Node } from "@xyflow/react";
 
@@ -60,6 +60,10 @@ export function applyFlowChanges(
     const delivery = edgeData.delivery ?? existing?.delivery;
     const relationship = edgeData.relationship ?? existing?.relationship;
     const rawLabel = edgeData.channelLabel ?? existing?.label;
+    const sourceHandle = (edge.sourceHandle ??
+      existing?.sourceHandle) as HandlePosition | undefined;
+    const targetHandle = (edge.targetHandle ??
+      existing?.targetHandle) as HandlePosition | undefined;
 
     return {
       id: edge.id,
@@ -71,6 +75,8 @@ export function applyFlowChanges(
       delivery,
       relationship,
       payloadKind: edgeData.payloadKind ?? existing?.payloadKind,
+      sourceHandle,
+      targetHandle,
       metadata: existing?.metadata,
     };
   });

@@ -2,15 +2,29 @@ import dagre from "@dagrejs/dagre";
 import type { SystemGraph, SystemNode } from "@system-canvas/core";
 
 const NODE_WIDTH = 180;
-const NODE_HEIGHT = 80;
+const BASE_NODE_HEIGHT = 80;
+const PORT_ROW_HEIGHT = 28;
+
+function estimateNodeHeight(node: SystemNode): number {
+  const portCount = node.ports?.length ?? 0;
+  return BASE_NODE_HEIGHT + (portCount > 0 ? PORT_ROW_HEIGHT : 0);
+}
 
 export function layoutGraph(graph: SystemGraph): SystemGraph {
   const g = new dagre.graphlib.Graph();
   g.setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: "LR", nodesep: 60, ranksep: 100 });
+  g.setGraph({
+    rankdir: "LR",
+    nodesep: 80,
+    ranksep: 120,
+    ranker: "network-simplex",
+  });
 
   for (const node of graph.nodes) {
-    g.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
+    g.setNode(node.id, {
+      width: NODE_WIDTH,
+      height: estimateNodeHeight(node),
+    });
   }
 
   for (const channel of graph.channels) {
@@ -20,13 +34,15 @@ export function layoutGraph(graph: SystemGraph): SystemGraph {
   dagre.layout(g);
 
   const nodes: SystemNode[] = graph.nodes.map((node) => {
+    if (node.position) return node;
     const layoutNode = g.node(node.id);
     if (!layoutNode) return node;
+    const height = estimateNodeHeight(node);
     return {
       ...node,
       position: {
         x: layoutNode.x - NODE_WIDTH / 2,
-        y: layoutNode.y - NODE_HEIGHT / 2,
+        y: layoutNode.y - height / 2,
       },
     };
   });

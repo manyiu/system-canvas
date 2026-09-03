@@ -40,6 +40,8 @@ export interface SystemNode {
 }
 /** How data moves across a channel — drives edge styling and animation. */
 export type FlowDelivery = "sync" | "async";
+/** React Flow connection point on a node border. */
+export type HandlePosition = "left" | "right" | "top" | "bottom";
 export interface Channel {
     id: string;
     source: string;
@@ -51,6 +53,10 @@ export interface Channel {
     /** Semantic relationship for architecture review */
     relationship?: RelationshipKind;
     payloadKind?: PayloadKind;
+    /** Connection point on source node; auto-derived from layout when omitted */
+    sourceHandle?: HandlePosition;
+    /** Connection point on target node; auto-derived from layout when omitted */
+    targetHandle?: HandlePosition;
     metadata?: Record<string, unknown>;
 }
 export interface SystemGraph {

@@ -1,0 +1,291 @@
+import { defineExample } from "./define-example.js";
+
+export const bitlyExample = defineExample({
+  id: "bitly",
+  name: "Bitly (URL Shortener)",
+  difficulty: "easy",
+  description: "Shorten and resolve URLs with cache, DB persistence, and async click analytics.",
+  tags: ["cache", "hashing", "read-heavy"],
+  patternsUsed: ["read-through-cache", "async-analytics"],
+  layoutHint: "pipeline",
+  defaultScenarioId: "bitly-shorten",
+  columns: [
+    ["Client"],
+    ["CDN"],
+    ["LoadBalancer"],
+    ["URLService"],
+    ["RedisCache", "PrimaryDB", "Kafka"],
+    ["AnalyticsService"],
+  ],
+  networks: [
+    { id: "edge", label: "Edge", kind: "bounded-context" },
+    { id: "core", label: "Core API", kind: "bounded-context" },
+    { id: "analytics", label: "Analytics", kind: "bounded-context" },
+  ],
+  nodes: [
+    { id: "Client", kind: "external", label: "Client", networkId: "edge" },
+    { id: "CDN", kind: "gateway", label: "CDN", icon: "cdn", networkId: "edge" },
+    { id: "LoadBalancer", kind: "gateway", label: "Load Balancer", networkId: "edge" },
+    { id: "URLService", kind: "service", label: "URL Service", icon: "microservice", networkId: "core" },
+    { id: "RedisCache", kind: "database", label: "Redis Cache", icon: "redis", networkId: "core" },
+    { id: "PrimaryDB", kind: "database", label: "Primary DB", icon: "postgres", networkId: "core" },
+    { id: "Kafka", kind: "queue", label: "Kafka", icon: "kafka", networkId: "analytics" },
+    { id: "AnalyticsService", kind: "service", label: "Analytics", icon: "microservice", networkId: "analytics" },
+  ],
+  channels: [
+    { source: "Client", target: "CDN", label: "request", delivery: "sync", relationship: "command", payloadKind: "request" },
+    { source: "CDN", target: "LoadBalancer", label: "forward", delivery: "sync", relationship: "command", payloadKind: "request" },
+    { source: "LoadBalancer", target: "URLService", label: "route", delivery: "sync", relationship: "command", payloadKind: "request" },
+    { id: "ch-cache", source: "URLService", target: "RedisCache", label: "lookup", delivery: "sync", relationship: "query", payloadKind: "query" },
+    { id: "ch-db", source: "URLService", target: "PrimaryDB", label: "persist", delivery: "sync", relationship: "command", payloadKind: "command" },
+    { id: "ch-analytics", source: "URLService", target: "Kafka", label: "click event", delivery: "async", relationship: "event", payloadKind: "event" },
+    { source: "Kafka", target: "AnalyticsService", label: "consume", delivery: "async", relationship: "event", payloadKind: "event" },
+  ],
+  scenarios: [
+    {
+      id: "bitly-shorten",
+      name: "Shorten URL",
+      steps: [
+        { name: "Client Request", channelId: "ch3", fromNode: "LoadBalancer", payloadType: "ShortenURL", payloadData: { url: "https://example.com" } },
+        { name: "Persist to DB", channelId: "ch-db", fromNode: "URLService", payloadType: "StoreMapping", payloadData: { shortCode: "abc123" }, visuals: [{ kind: "highlight", targetId: "PrimaryDB", color: "yellow" }] },
+        { name: "Populate Cache", channelId: "ch-cache", fromNode: "URLService", payloadType: "CacheWrite", payloadData: { shortCode: "abc123" }, visuals: [{ kind: "signal", targetId: "RedisCache", color: "green" }] },
+      ],
+    },
+    {
+      id: "bitly-cache-hit",
+      name: "Redirect (Cache Hit)",
+      steps: [
+        { name: "Resolve Request", channelId: "ch3", fromNode: "LoadBalancer", payloadType: "ResolveURL", payloadData: { shortCode: "abc123" } },
+        { name: "Cache Hit", channelId: "ch-cache", fromNode: "URLService", payloadType: "CacheHit", payloadData: { longUrl: "https://example.com" }, visuals: [{ kind: "signal", targetId: "RedisCache", color: "green", label: "HIT" }] },
+        { name: "302 Redirect", description: "Return redirect without touching DB", visuals: [{ kind: "signal", targetId: "Client", color: "green", label: "302" }] },
+      ],
+    },
+    {
+      id: "bitly-cache-miss",
+      name: "Redirect (Cache Miss)",
+      steps: [
+        { name: "Resolve Request", channelId: "ch3", fromNode: "LoadBalancer", payloadType: "ResolveURL", payloadData: { shortCode: "xyz789" } },
+        { name: "Cache Miss", channelId: "ch-cache", fromNode: "URLService", visuals: [{ kind: "barrier", targetId: "RedisCache", color: "yellow", label: "MISS" }] },
+        { name: "Read Through DB", channelId: "ch-db", fromNode: "URLService", payloadType: "DBLookup", payloadData: { shortCode: "xyz789" }, visuals: [{ kind: "signal", targetId: "PrimaryDB", color: "green" }] },
+        { name: "Populate Cache", channelId: "ch-cache", fromNode: "URLService", visuals: [{ kind: "highlight", targetId: "RedisCache", color: "yellow", label: "Warm cache" }] },
+      ],
+    },
+  ],
+});
+
+export const dropboxExample = defineExample({
+  id: "dropbox",
+  name: "Dropbox",
+  difficulty: "easy",
+  description: "File sync with separate metadata and blob storage paths plus push notifications.",
+  tags: ["sync", "blob-storage", "metadata"],
+  patternsUsed: ["content-addressable-storage", "event-notification"],
+  layoutHint: "tiered",
+  defaultScenarioId: "dropbox-upload",
+  columns: [
+    ["DesktopClient", "MobileClient"],
+    ["APIGateway", "CDN"],
+    ["MetadataService"],
+    ["MetadataDB", "ObjectStore", "ChangeQueue"],
+    ["SyncNotification"],
+  ],
+  networks: [
+    { id: "client", label: "Clients", kind: "bounded-context" },
+    { id: "api", label: "API Layer", kind: "bounded-context" },
+    { id: "storage", label: "Storage", kind: "bounded-context" },
+  ],
+  nodes: [
+    { id: "DesktopClient", kind: "external", label: "Desktop Client", networkId: "client" },
+    { id: "MobileClient", kind: "external", label: "Mobile Client", networkId: "client" },
+    { id: "APIGateway", kind: "gateway", label: "API Gateway", networkId: "api" },
+    { id: "MetadataService", kind: "service", label: "Metadata Service", icon: "microservice", networkId: "api" },
+    { id: "CDN", kind: "gateway", label: "CDN", icon: "cdn", networkId: "storage" },
+    { id: "MetadataDB", kind: "database", label: "Metadata DB", icon: "postgres", networkId: "storage" },
+    { id: "ObjectStore", kind: "database", label: "Object Store", icon: "s3", networkId: "storage" },
+    { id: "ChangeQueue", kind: "queue", label: "Change Queue", icon: "kafka", networkId: "storage" },
+    { id: "SyncNotification", kind: "service", label: "Sync Notification", icon: "microservice", networkId: "api" },
+  ],
+  channels: [
+    { id: "ch-upload", source: "DesktopClient", target: "APIGateway", label: "presigned URL", delivery: "sync", relationship: "command", payloadKind: "command" },
+    { id: "ch-blob", source: "DesktopClient", target: "ObjectStore", label: "PUT chunks", delivery: "sync", relationship: "command", payloadKind: "command" },
+    { id: "ch-s3-notify", source: "ObjectStore", target: "MetadataService", label: "object created", delivery: "async", relationship: "event", payloadKind: "event" },
+    { id: "ch-meta", source: "APIGateway", target: "MetadataService", label: "register metadata", delivery: "sync", relationship: "command", payloadKind: "command" },
+    { source: "MetadataService", target: "MetadataDB", label: "persist", delivery: "sync", relationship: "command", payloadKind: "command" },
+    { id: "ch-event", source: "MetadataService", target: "ChangeQueue", label: "file changed", delivery: "async", relationship: "event", payloadKind: "event" },
+    { source: "ChangeQueue", target: "SyncNotification", label: "notify", delivery: "async", relationship: "event", payloadKind: "event" },
+    { id: "ch-push", source: "SyncNotification", target: "MobileClient", label: "WebSocket push", delivery: "sync", relationship: "event", payloadKind: "event" },
+    { source: "SyncNotification", target: "DesktopClient", label: "WebSocket push", delivery: "sync", relationship: "event", payloadKind: "event" },
+    { id: "ch-download", source: "MobileClient", target: "CDN", label: "download", delivery: "sync", relationship: "query", payloadKind: "query" },
+    { source: "CDN", target: "ObjectStore", label: "origin fetch", delivery: "sync", relationship: "query", payloadKind: "query" },
+  ],
+  scenarios: [
+    {
+      id: "dropbox-upload",
+      name: "Upload File",
+      steps: [
+        { name: "Request Presigned URL", channelId: "ch-upload", fromNode: "DesktopClient", payloadType: "PresignUpload", payloadData: { fileId: "f1" } },
+        { name: "PUT Chunks to S3", channelId: "ch-blob", fromNode: "DesktopClient", payloadType: "PutBlob", payloadData: { hash: "abc" } },
+        { name: "Register Metadata", channelId: "ch-meta", fromNode: "APIGateway", payloadType: "RegisterFile", payloadData: { fileId: "f1" } },
+      ],
+    },
+    {
+      id: "dropbox-sync",
+      name: "Sync to Second Device",
+      steps: [
+        { name: "File Changed", channelId: "ch-event", fromNode: "MetadataService", payloadType: "FileChanged", payloadData: { fileId: "f1" } },
+        { name: "Push Notification", channelId: "ch-push", fromNode: "SyncNotification", payloadType: "SyncPush", payloadData: { fileId: "f1" }, visuals: [{ kind: "signal", targetId: "MobileClient", color: "green" }] },
+      ],
+    },
+    {
+      id: "dropbox-conflict",
+      name: "Conflict Resolution",
+      steps: [
+        { name: "Concurrent Edits", description: "Two clients edit same file with different versions", visuals: [{ kind: "highlight", targetId: "MetadataService", color: "yellow", label: "Conflict" }] },
+        { name: "Version Check", channelId: "ch-meta", fromNode: "APIGateway", payloadType: "VersionCheck", payloadData: { version: 2 } },
+        { name: "Conflict Copy", description: "CAS commit fails; server keeps both versions instead of last-write-wins", visuals: [{ kind: "signal", targetId: "MetadataDB", color: "green" }] },
+      ],
+    },
+  ],
+});
+
+export const yelpExample = defineExample({
+  id: "yelp",
+  name: "Yelp",
+  difficulty: "easy",
+  description: "Local business search with geo index, read cache, and async search reindexing.",
+  tags: ["geo", "search", "cache"],
+  patternsUsed: ["read-through-cache", "cqrs-lite", "geo-sharding"],
+  layoutHint: "tiered",
+  defaultScenarioId: "yelp-geo-search",
+  columns: [
+    ["Client"],
+    ["CDN"],
+    ["APIGateway"],
+    ["SearchService", "ReviewService"],
+    ["GeoIndex", "RedisCache", "PrimaryDB"],
+  ],
+  nodes: [
+    { id: "Client", kind: "external", label: "Client" },
+    { id: "CDN", kind: "gateway", label: "CDN", icon: "cdn" },
+    { id: "APIGateway", kind: "gateway", label: "API Gateway" },
+    { id: "SearchService", kind: "service", label: "Search Service", icon: "microservice" },
+    { id: "ReviewService", kind: "service", label: "Review Service", icon: "microservice" },
+    { id: "GeoIndex", kind: "database", label: "Geo Index", icon: "mongodb" },
+    { id: "RedisCache", kind: "database", label: "Redis Cache", icon: "redis" },
+    { id: "PrimaryDB", kind: "database", label: "Primary DB", icon: "postgres" },
+  ],
+  channels: [
+    { source: "Client", target: "CDN", delivery: "sync", relationship: "command", payloadKind: "request", label: "search" },
+    { source: "CDN", target: "APIGateway", delivery: "sync", relationship: "command", payloadKind: "request", label: "forward" },
+    { id: "ch-search", source: "APIGateway", target: "SearchService", delivery: "sync", relationship: "query", payloadKind: "query", label: "geo search" },
+    { id: "ch-geo", source: "SearchService", target: "GeoIndex", delivery: "sync", relationship: "query", payloadKind: "query", label: "geo filter" },
+    { id: "ch-cache", source: "SearchService", target: "RedisCache", delivery: "sync", relationship: "query", payloadKind: "query", label: "cache" },
+    { id: "ch-review", source: "APIGateway", target: "ReviewService", delivery: "sync", relationship: "command", payloadKind: "command", label: "write review" },
+    { id: "ch-db", source: "ReviewService", target: "PrimaryDB", delivery: "sync", relationship: "command", payloadKind: "command", label: "persist" },
+    { source: "SearchService", target: "PrimaryDB", delivery: "sync", relationship: "query", payloadKind: "query", label: "hydrate" },
+    { id: "ch-reindex", source: "ReviewService", target: "GeoIndex", delivery: "async", relationship: "event", payloadKind: "event", label: "reindex" },
+  ],
+  scenarios: [
+    {
+      id: "yelp-geo-search",
+      name: "Geo Search",
+      steps: [
+        { name: "Search Request", channelId: "ch-search", fromNode: "APIGateway", payloadType: "GeoSearch", payloadData: { lat: 37.7, lng: -122.4 } },
+        { name: "Geo Filter", channelId: "ch-geo", fromNode: "SearchService", payloadType: "GeoQuery", payloadData: { radius: "5km" } },
+        { name: "Return Results", visuals: [{ kind: "signal", targetId: "Client", color: "green" }] },
+      ],
+    },
+    {
+      id: "yelp-write-review",
+      name: "Write Review",
+      steps: [
+        { name: "Submit Review", channelId: "ch-review", fromNode: "APIGateway", payloadType: "SubmitReview", payloadData: { rating: 5 } },
+        { name: "Persist Review", channelId: "ch-db", fromNode: "ReviewService", payloadType: "StoreReview", payloadData: { businessId: "b1" } },
+        { name: "Async Reindex", channelId: "ch-reindex", fromNode: "ReviewService", payloadType: "ReindexBusiness", payloadData: { businessId: "b1" }, visuals: [{ kind: "lag", targetId: "GeoIndex", color: "yellow", label: "Reindex pending" }] },
+      ],
+    },
+    {
+      id: "yelp-cache-hit",
+      name: "Business Page Cache Hit",
+      steps: [
+        { name: "Page Request", channelId: "ch-search", fromNode: "APIGateway", payloadType: "GetBusiness", payloadData: { id: "b1" } },
+        { name: "Cache Hit", channelId: "ch-cache", fromNode: "SearchService", visuals: [{ kind: "signal", targetId: "RedisCache", color: "green", label: "HIT" }] },
+      ],
+    },
+  ],
+});
+
+export const localDeliveryExample = defineExample({
+  id: "local-delivery",
+  name: "Local Delivery Service",
+  difficulty: "easy",
+  description: "Food delivery with order placement, driver matching, and live GPS tracking.",
+  tags: ["geo", "matching", "real-time"],
+  patternsUsed: ["geo-matching", "state-machine", "pub-sub"],
+  layoutHint: "hub",
+  defaultScenarioId: "delivery-place-match",
+  columns: [
+    ["CustomerApp", "DriverApp", "RestaurantPortal"],
+    ["APIGateway"],
+    ["OrderService", "DispatchService", "LocationService"],
+    ["OrderDB", "RedisActive", "NotificationQueue"],
+  ],
+  nodes: [
+    { id: "CustomerApp", kind: "external", label: "Customer App" },
+    { id: "DriverApp", kind: "external", label: "Driver App" },
+    { id: "RestaurantPortal", kind: "external", label: "Restaurant Portal" },
+    { id: "APIGateway", kind: "gateway", label: "API Gateway" },
+    { id: "OrderService", kind: "service", label: "Order Service", icon: "microservice" },
+    { id: "DispatchService", kind: "service", label: "Dispatch Service", icon: "microservice" },
+    { id: "LocationService", kind: "service", label: "Location Service", icon: "microservice" },
+    { id: "OrderDB", kind: "database", label: "Order DB", icon: "postgres" },
+    { id: "RedisActive", kind: "database", label: "Active Orders", icon: "redis" },
+    { id: "NotificationQueue", kind: "queue", label: "Notification Queue", icon: "kafka" },
+  ],
+  channels: [
+    { id: "ch-order", source: "CustomerApp", target: "APIGateway", label: "place order", delivery: "sync", relationship: "command", payloadKind: "command" },
+    { id: "ch-dispatch", source: "APIGateway", target: "OrderService", label: "create order", delivery: "sync", relationship: "command", payloadKind: "command" },
+    { source: "OrderService", target: "OrderDB", label: "persist", delivery: "sync", relationship: "command", payloadKind: "command" },
+    { id: "ch-match", source: "OrderService", target: "DispatchService", label: "match driver", delivery: "sync", relationship: "command", payloadKind: "command" },
+    { source: "DispatchService", target: "LocationService", label: "find nearby", delivery: "sync", relationship: "query", payloadKind: "query" },
+    { source: "DispatchService", target: "RedisActive", label: "track", delivery: "sync", relationship: "command", payloadKind: "command" },
+    { id: "ch-notify", source: "OrderService", target: "NotificationQueue", label: "status update", delivery: "async", relationship: "event", payloadKind: "event" },
+    { id: "ch-gps", source: "DriverApp", target: "LocationService", label: "GPS stream", delivery: "async", relationship: "event", payloadKind: "event" },
+    { source: "LocationService", target: "RedisActive", label: "GEOADD", delivery: "sync", relationship: "command", payloadKind: "command" },
+    { id: "ch-restaurant", source: "RestaurantPortal", target: "APIGateway", label: "confirm order", delivery: "sync", relationship: "command", payloadKind: "command" },
+    { source: "APIGateway", target: "OrderService", label: "restaurant ack", delivery: "sync", relationship: "command", payloadKind: "command" },
+    { source: "NotificationQueue", target: "CustomerApp", label: "push status", delivery: "async", relationship: "event", payloadKind: "event" },
+    { source: "NotificationQueue", target: "DriverApp", label: "dispatch offer", delivery: "async", relationship: "event", payloadKind: "event" },
+    { source: "NotificationQueue", target: "RestaurantPortal", label: "new order", delivery: "async", relationship: "event", payloadKind: "event" },
+  ],
+  scenarios: [
+    {
+      id: "delivery-place-match",
+      name: "Place & Match",
+      steps: [
+        { name: "Place Order", channelId: "ch-order", fromNode: "CustomerApp", payloadType: "PlaceOrder", payloadData: { items: 3 } },
+        { name: "Create Order", channelId: "ch-dispatch", fromNode: "APIGateway", payloadType: "CreateOrder", payloadData: { orderId: "o1" } },
+        { name: "Match Driver", channelId: "ch-match", fromNode: "OrderService", payloadType: "AssignDriver", payloadData: { driverId: "d1" } },
+      ],
+    },
+    {
+      id: "delivery-tracking",
+      name: "Live Tracking",
+      steps: [
+        { name: "GPS Update", channelId: "ch-gps", fromNode: "DriverApp", payloadType: "GPSUpdate", payloadData: { lat: 37.7, lng: -122.4 } },
+        { name: "Update Location", visuals: [{ kind: "signal", targetId: "LocationService", color: "green" }] },
+        { name: "Customer Polls", description: "Customer app receives updated driver position", visuals: [{ kind: "signal", targetId: "CustomerApp", color: "green" }] },
+      ],
+    },
+    {
+      id: "delivery-complete",
+      name: "Delivery Complete",
+      steps: [
+        { name: "Mark Delivered", channelId: "ch-match", fromNode: "OrderService", payloadType: "CompleteOrder", payloadData: { orderId: "o1" } },
+        { name: "Notify Customer", channelId: "ch-notify", fromNode: "OrderService", payloadType: "OrderDelivered", payloadData: { orderId: "o1" } },
+      ],
+    },
+  ],
+});
+
+export const easyExamples = [bitlyExample, dropboxExample, yelpExample, localDeliveryExample];

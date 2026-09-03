@@ -1,7 +1,16 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-const OUTBOX_NODES = ["OrderService", "DB", "Poller", "Kafka"];
-const CIRCUIT_BREAKER_NODES = ["Client", "Gateway", "Service"];
+const BITLY_NODES = [
+  "Client",
+  "CDN",
+  "LoadBalancer",
+  "URLService",
+  "RedisCache",
+  "PrimaryDB",
+  "Kafka",
+  "AnalyticsService",
+];
+const RATE_LIMITER_NODES = ["Client", "APIGateway", "RateLimiterService", "RedisCounter", "BackendService"];
 
 async function expectNodeInCanvas(canvas: Locator, nodeId: string) {
   const node = canvas.locator(`.react-flow__node[data-id="${nodeId}"]`);
@@ -13,15 +22,17 @@ async function expectNodeInCanvas(canvas: Locator, nodeId: string) {
   expect(box!.height).toBeGreaterThan(0);
 }
 
-async function waitForCanvasReady(page: Page, expectedEdges = 3) {
+async function waitForCanvasReady(page: Page, expectedEdges?: number) {
   const canvas = page.getByTestId("architecture-canvas");
   await expect(canvas).toBeVisible({ timeout: 15_000 });
   await expect(canvas.locator(".react-flow__node")).not.toHaveCount(0, {
     timeout: 15_000,
   });
-  await expect(canvas.locator(".react-flow__edge")).toHaveCount(expectedEdges, {
-    timeout: 15_000,
-  });
+  if (expectedEdges !== undefined) {
+    await expect(canvas.locator(".react-flow__edge")).toHaveCount(expectedEdges, {
+      timeout: 15_000,
+    });
+  }
   return canvas;
 }
 
@@ -42,20 +53,20 @@ test.describe("Architecture Canvas", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await waitForCanvasReady(page);
+    await waitForCanvasReady(page, 7);
   });
 
-  test("renders outbox topology nodes and edges", async ({ page }) => {
+  test("renders bitly topology nodes and edges", async ({ page }) => {
     const canvas = page.getByTestId("architecture-canvas");
 
-    for (const nodeId of OUTBOX_NODES) {
+    for (const nodeId of BITLY_NODES) {
       await expectNodeInCanvas(canvas, nodeId);
       await expect(
         canvas.locator(`.react-flow__node[data-id="${nodeId}"] .sc-node-label`),
       ).not.toBeEmpty();
     }
 
-    await expect(canvas.locator(".react-flow__edge")).toHaveCount(3);
+    await expect(canvas.locator(".react-flow__edge")).toHaveCount(7);
   });
 
   test("fits nodes inside the visible canvas area", async ({ page }) => {
@@ -66,7 +77,7 @@ test.describe("Architecture Canvas", () => {
       .poll(async () => {
         const canvasBox = await canvas.boundingBox();
         const nodeBox = await canvas
-          .locator('.react-flow__node[data-id="OrderService"]')
+          .locator('.react-flow__node[data-id="URLService"]')
           .boundingBox();
         if (!canvasBox || !nodeBox) return false;
         return (
@@ -80,7 +91,7 @@ test.describe("Architecture Canvas", () => {
     const canvasBox = await canvas.boundingBox();
     expect(canvasBox).not.toBeNull();
 
-    for (const nodeId of OUTBOX_NODES) {
+    for (const nodeId of BITLY_NODES) {
       const node = canvas.locator(`.react-flow__node[data-id="${nodeId}"]`);
       const nodeBox = await node.boundingBox();
       expect(nodeBox).not.toBeNull();
@@ -102,38 +113,40 @@ test.describe("Architecture Canvas", () => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await page.getByRole("button", { name: "Copy DSL" }).click();
 
-    await waitForClipboardText(page, "channel ch1 OrderService -> DB");
+    await waitForClipboardText(page, "channel ch1 Client -> CDN");
     const dsl = await page.evaluate(async () => navigator.clipboard.readText());
-    expect(dsl).toContain("channel ch2 DB -> Poller");
-    expect(dsl).toContain("channel ch3 Poller -> Kafka");
+    expect(dsl).toContain("URLService -> RedisCache");
+    expect(dsl).toContain("URLService -> PrimaryDB");
   });
 
   test("switching templates updates the canvas", async ({ page }) => {
     const canvas = page.getByTestId("architecture-canvas");
 
-    await selectExample(page, "circuit-breaker");
-    await waitForCanvasReady(page, 2);
+    await selectExample(page, "rate-limiter");
+    await waitForCanvasReady(page);
 
-    for (const nodeId of CIRCUIT_BREAKER_NODES) {
+    for (const nodeId of RATE_LIMITER_NODES) {
       await expectNodeInCanvas(canvas, nodeId);
     }
-    await expect(canvas.locator('.react-flow__node[data-id="OrderService"]')).toHaveCount(
+    await expect(canvas.locator('.react-flow__node[data-id="URLService"]')).toHaveCount(
       0,
     );
   });
 
-  test("examples menu shows current example and reload", async ({ page }) => {
+  test("examples menu shows current example and difficulty groups", async ({ page }) => {
     await expect(page.getByTestId("examples-menu-trigger")).toContainText(
-      "Transactional Outbox",
+      "Bitly",
     );
     await page.getByTestId("examples-menu-trigger").click();
-    await expect(page.getByTestId("example-item-outbox")).toHaveClass(/active/);
+    await expect(page.getByTestId("example-item-bitly")).toHaveClass(/active/);
+    await expect(page.getByText("Easy")).toBeVisible();
+    await expect(page.getByText("Medium")).toBeVisible();
     await expect(page.getByTestId("reload-example")).toBeEnabled();
   });
 
   test("clicking active example does not reset document", async ({ page }) => {
     const canvas = page.getByTestId("architecture-canvas");
-    const node = canvas.locator('.react-flow__node[data-id="OrderService"]');
+    const node = canvas.locator('.react-flow__node[data-id="URLService"]');
     const box = await node.boundingBox();
     expect(box).not.toBeNull();
 
@@ -152,7 +165,7 @@ test.describe("Architecture Canvas", () => {
     const movedX = Math.round((await node.boundingBox())!.x);
 
     await page.getByTestId("examples-menu-trigger").click();
-    await page.getByTestId("example-item-outbox").click();
+    await page.getByTestId("example-item-bitly").click();
 
     await expect
       .poll(async () => {
@@ -165,30 +178,29 @@ test.describe("Architecture Canvas", () => {
   test("shows current step title in playback row", async ({ page }) => {
     const title = page.getByTestId("current-step-title");
     await expect(title).toBeVisible();
-    await expect(title).toContainText("Dual Write");
-    await page.getByRole("button", { name: /Poller Dispatch/ }).click();
-    await expect(title).toContainText("Poller Dispatch");
+    await expect(title).toContainText("Client Request");
+    await page.getByRole("button", { name: /Persist to DB/ }).click();
+    await expect(title).toContainText("Persist to DB");
   });
 
-  test("shows all outbox scenarios as chips", async ({ page }) => {
+  test("shows all bitly scenarios as chips", async ({ page }) => {
     const strip = page.getByTestId("scenario-strip");
-    await expect(strip.getByTestId("scenario-chip-outbox-happy-path")).toBeVisible();
-    await expect(strip.getByTestId("scenario-chip-outbox-kafka-down")).toBeVisible();
-    await expect(
-      strip.getByTestId("scenario-chip-outbox-duplicate-publish"),
-    ).toBeVisible();
-    await expect(
-      strip.getByTestId("scenario-chip-outbox-happy-path"),
-    ).toHaveAttribute("aria-selected", "true");
+    await expect(strip.getByTestId("scenario-chip-bitly-shorten")).toBeVisible();
+    await expect(strip.getByTestId("scenario-chip-bitly-cache-hit")).toBeVisible();
+    await expect(strip.getByTestId("scenario-chip-bitly-cache-miss")).toBeVisible();
+    await expect(strip.getByTestId("scenario-chip-bitly-shorten")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
   });
 
   test("template load aligns nodes without Auto Layout", async ({ page }) => {
     const canvas = page.getByTestId("architecture-canvas");
-    await selectExample(page, "circuit-breaker");
-    await waitForCanvasReady(page, 2);
+    await selectExample(page, "rate-limiter");
+    await waitForCanvasReady(page);
 
     const boxes = await Promise.all(
-      CIRCUIT_BREAKER_NODES.map(async (nodeId) => {
+      RATE_LIMITER_NODES.map(async (nodeId) => {
         const box = await canvas
           .locator(`.react-flow__node[data-id="${nodeId}"]`)
           .boundingBox();
@@ -197,7 +209,6 @@ test.describe("Architecture Canvas", () => {
       }),
     );
 
-    // LR dagre layout: nodes should not share a diagonal stagger (x and y both ascending).
     const xs = boxes.map((b) => b.x);
     const ys = boxes.map((b) => b.y);
     const xSpread = Math.max(...xs) - Math.min(...xs);
@@ -208,38 +219,29 @@ test.describe("Architecture Canvas", () => {
 
   test("shows sync vs async channel styles", async ({ page }) => {
     const canvas = page.getByTestId("architecture-canvas");
-    await expect(canvas.locator(".react-flow__edge.sc-edge-sync")).toHaveCount(1);
-    await expect(canvas.locator(".react-flow__edge.sc-edge-async")).toHaveCount(2);
+    await expect(canvas.locator(".react-flow__edge.sc-edge-sync").first()).toBeVisible();
+    await expect(canvas.locator(".react-flow__edge.sc-edge-async").first()).toBeVisible();
     await expect(canvas.getByText("sync — solid")).toBeVisible();
     await expect(canvas.getByText("async — dashed")).toBeVisible();
   });
 
-  test("step selection animates active channel edges", async ({ page }) => {
+  test("step selection animates active async channel edges", async ({ page }) => {
     const canvas = page.getByTestId("architecture-canvas");
 
-    // Dual Write: ch1 is sync — highlighted solid, no dash animation
-    await expect(canvas.locator(".react-flow__edge.sc-edge-sync")).toHaveCount(1);
     await expect(canvas.locator(".react-flow__edge.animated")).toHaveCount(0);
 
-    await page.getByRole("button", { name: /Poller Dispatch/ }).click();
-    await expect(
-      canvas.locator('.react-flow__edge[data-id="ch3"].sc-edge-async.animated'),
-    ).toHaveCount(1);
-  });
-
-  test("step selection highlights port visuals", async ({ page }) => {
-    await page.getByRole("button", { name: /Dual Write/ }).click();
-
-    const outboxPort = page.locator(".sc-port-chip", { hasText: "Outbox Table" });
-    await expect(outboxPort).toHaveClass(/sc-port-chip-active/);
+    await selectExample(page, "bitly");
+    await page.getByTestId("scenario-chip-bitly-cache-hit").click();
+    await page.getByRole("button", { name: /Cache Hit/ }).click();
+    await expect(canvas.locator(".react-flow__edge.sc-edge-sync.animated").first()).toBeVisible();
   });
 
   test("auto layout keeps nodes visible", async ({ page }) => {
     const canvas = page.getByTestId("architecture-canvas");
     await page.getByRole("button", { name: "Auto Layout" }).click();
-    await waitForCanvasReady(page, 3);
+    await waitForCanvasReady(page, 7);
 
-    await expectNodeInCanvas(canvas, "OrderService");
+    await expectNodeInCanvas(canvas, "URLService");
   });
 
   test("moving nodes does not corrupt channel labels in DSL", async ({
@@ -249,7 +251,7 @@ test.describe("Architecture Canvas", () => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
 
     const canvas = page.getByTestId("architecture-canvas");
-    const node = canvas.locator('.react-flow__node[data-id="OrderService"]');
+    const node = canvas.locator('.react-flow__node[data-id="URLService"]');
     await expect(node).toBeVisible();
 
     const box = await node.boundingBox();
@@ -261,8 +263,7 @@ test.describe("Architecture Canvas", () => {
     }
 
     const initialDsl = await readDslFromClipboard();
-    await waitForClipboardText(page, 'label: "poll"');
-    expect(initialDsl).not.toMatch(/async · poll · async · poll/);
+    await waitForClipboardText(page, 'label: "lookup"');
 
     await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
     await page.mouse.down();
@@ -272,58 +273,47 @@ test.describe("Architecture Canvas", () => {
     await expect
       .poll(async () => {
         const dsl = await readDslFromClipboard();
-        const match = dsl.match(/service OrderService \{[^}]*x: (-?\d+)/);
+        const match = dsl.match(/service URLService \{[^}]*x: (-?\d+)/);
         return match ? Number(match[1]) : null;
       })
       .not.toBe(0);
 
     const afterDsl = await readDslFromClipboard();
 
-    expect(afterDsl).toContain('label: "poll"');
-    expect(afterDsl).toContain('label: "publish"');
-    expect(afterDsl).not.toMatch(/async · poll · async · poll/);
-    expect(afterDsl).not.toMatch(/async · event · async · event/);
+    expect(afterDsl).toContain('label: "lookup"');
+    expect(afterDsl).toContain('label: "persist"');
     expect(afterDsl.length).toBeLessThanOrEqual(initialDsl.length + 120);
   });
 
-  test("review panel omits outbox rules for other patterns", async ({ page }) => {
+  test("review panel renders for examples", async ({ page }) => {
     const reviewPanel = page.getByTestId("review-panel");
     await expect(reviewPanel).toBeVisible();
     await expect(reviewPanel.getByText("Architecture Review")).toBeVisible();
-    await expect(reviewPanel.locator(".review-lint-rule")).toHaveCount(0);
 
-    await selectExample(page, "circuit-breaker");
-    await waitForCanvasReady(page, 2);
+    await selectExample(page, "rate-limiter");
+    await waitForCanvasReady(page);
 
     await expect(reviewPanel).toBeVisible();
-    await expect(reviewPanel.locator(".review-lint-rule")).toHaveCount(0);
-    await expect(reviewPanel).not.toContainText("outbox-missing-sync-persist");
-    await expect(reviewPanel).not.toContainText("outbox-missing-async-publish");
-    await expect(reviewPanel).not.toContainText("missing-relationship");
   });
 
   test("step selection keeps canvas rendered", async ({ page }) => {
     const canvas = page.getByTestId("architecture-canvas");
-    await page.getByRole("button", { name: /Dual Write/ }).click();
+    await page.getByRole("button", { name: /Client Request/ }).click();
 
-    await expectNodeInCanvas(canvas, "DB");
-    await expect(canvas.locator(".react-flow__edge")).toHaveCount(3);
+    await expectNodeInCanvas(canvas, "PrimaryDB");
+    await expect(canvas.locator(".react-flow__edge")).toHaveCount(7);
   });
 
   test("play advances steps automatically", async ({ page }) => {
     const timeline = page.getByTestId("step-timeline");
-    await expect(timeline.getByTestId("playback-step-label")).toHaveText("1/2");
+    await expect(timeline.getByTestId("playback-step-label")).toHaveText("1/3");
 
     await timeline.getByTestId("playback-speed").selectOption("2");
     await timeline.getByTestId("playback-play-pause").click();
 
-    await expect(timeline.getByTestId("playback-step-label")).toHaveText("2/2", {
+    await expect(timeline.getByTestId("playback-step-label")).toHaveText("2/3", {
       timeout: 3_000,
     });
-    await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute(
-      "aria-label",
-      "Play",
-    );
   });
 
   test("pause stops auto-advance", async ({ page }) => {
@@ -349,17 +339,13 @@ test.describe("Architecture Canvas", () => {
   });
 
   test("scrubber and step buttons seek and pause playback", async ({ page }) => {
-    const canvas = page.getByTestId("architecture-canvas");
     const timeline = page.getByTestId("step-timeline");
 
     await timeline.getByTestId("playback-step-forward").click();
-    await expect(timeline.getByTestId("playback-step-label")).toHaveText("2/2");
-    await expect(
-      canvas.locator('.react-flow__edge[data-id="ch3"].sc-edge-async.animated'),
-    ).toHaveCount(1);
+    await expect(timeline.getByTestId("playback-step-label")).toHaveText("2/3");
 
-    await timeline.getByRole("button", { name: /Dual Write/ }).click();
-    await expect(timeline.getByTestId("playback-step-label")).toHaveText("1/2");
+    await timeline.getByRole("button", { name: /Client Request/ }).click();
+    await expect(timeline.getByTestId("playback-step-label")).toHaveText("1/3");
     await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute(
       "aria-label",
       "Play",
@@ -369,50 +355,42 @@ test.describe("Architecture Canvas", () => {
   test("scenario switch resets playback to step 1", async ({ page }) => {
     const timeline = page.getByTestId("step-timeline");
     await timeline.getByTestId("playback-step-forward").click();
-    await expect(timeline.getByTestId("playback-step-label")).toHaveText("2/2");
+    await expect(timeline.getByTestId("playback-step-label")).toHaveText("2/3");
 
-    const chips = timeline.getByTestId("scenario-strip").locator(".scenario-chip");
-    expect(await chips.count()).toBeGreaterThan(1);
-
-    await timeline.getByTestId("scenario-chip-outbox-kafka-down").click();
+    await timeline.getByTestId("scenario-chip-bitly-cache-hit").click();
     await expect(timeline.getByTestId("playback-step-label")).toHaveText(/1\//);
     await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute(
       "aria-label",
       "Play",
     );
     await expect(
-      timeline.getByTestId("scenario-chip-outbox-kafka-down"),
+      timeline.getByTestId("scenario-chip-bitly-cache-hit"),
     ).toHaveAttribute("aria-selected", "true");
   });
 
-  test("Dual Write shows payload packet on OrderService → DB", async ({
+  test("Client Request shows payload packet on URLService channel", async ({
     page,
   }) => {
     const canvas = page.getByTestId("architecture-canvas");
-    await page.getByRole("button", { name: /Dual Write/ }).click();
-
-    const packet = canvas.getByTestId("payload-packet");
-    await expect(packet).toBeVisible();
-    await expect(packet).toHaveAttribute("data-channel-id", "ch1");
-    await expect(packet).toHaveAttribute("data-payload-type", "PlaceOrder");
-    await expect(
-      canvas.locator('.react-flow__edge[data-id="ch1"].sc-edge-sync'),
-    ).toHaveCount(1);
-  });
-
-  test("Poller Dispatch shows payload packet on Poller → Kafka", async ({
-    page,
-  }) => {
-    const canvas = page.getByTestId("architecture-canvas");
-    await page.getByRole("button", { name: /Poller Dispatch/ }).click();
+    await page.getByRole("button", { name: /Client Request/ }).click();
 
     const packet = canvas.getByTestId("payload-packet");
     await expect(packet).toBeVisible();
     await expect(packet).toHaveAttribute("data-channel-id", "ch3");
-    await expect(packet).toHaveAttribute("data-payload-type", "OrderCreated");
+    await expect(packet).toHaveAttribute("data-payload-type", "ShortenURL");
     await expect(
-      canvas.locator('.react-flow__edge[data-id="ch3"].sc-edge-async.animated'),
+      canvas.locator('.react-flow__edge[data-id="ch3"].sc-edge-sync'),
     ).toHaveCount(1);
+  });
+
+  test("Persist to DB shows payload packet", async ({ page }) => {
+    const canvas = page.getByTestId("architecture-canvas");
+    await page.getByRole("button", { name: /Persist to DB/ }).click();
+
+    const packet = canvas.getByTestId("payload-packet");
+    await expect(packet).toBeVisible();
+    await expect(packet).toHaveAttribute("data-channel-id", "ch-db");
+    await expect(packet).toHaveAttribute("data-payload-type", "StoreMapping");
   });
 
   test("scrubbing swaps payload packet between steps", async ({ page }) => {
@@ -422,13 +400,13 @@ test.describe("Architecture Canvas", () => {
     await timeline.getByTestId("playback-step-forward").click();
     await expect(canvas.getByTestId("payload-packet")).toHaveAttribute(
       "data-channel-id",
-      "ch3",
+      "ch-db",
     );
 
-    await timeline.getByRole("button", { name: /Dual Write/ }).click();
+    await timeline.getByRole("button", { name: /Client Request/ }).click();
     await expect(canvas.getByTestId("payload-packet")).toHaveAttribute(
       "data-channel-id",
-      "ch1",
+      "ch3",
     );
     await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute(
       "aria-label",

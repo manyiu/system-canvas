@@ -1,6 +1,20 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { CSSProperties } from "react";
+import type { HandlePosition, NodeKind } from "@system-canvas/core";
+import { resolveNodeIcon } from "../icons/registry.js";
 import type { NodeVisualStyle } from "../visuals/apply-directives.js";
+
+/** Same id per side for source and target — React Flow looks up by (type, id). */
+const HANDLE_SIDES: {
+  id: HandlePosition;
+  position: Position;
+  className: string;
+}[] = [
+  { id: "left", position: Position.Left, className: "sc-handle" },
+  { id: "right", position: Position.Right, className: "sc-handle" },
+  { id: "top", position: Position.Top, className: "sc-handle sc-handle-top" },
+  { id: "bottom", position: Position.Bottom, className: "sc-handle sc-handle-bottom" },
+];
 
 export interface SystemNodeData {
   label: string;
@@ -11,18 +25,14 @@ export interface SystemNodeData {
   visual?: NodeVisualStyle;
 }
 
-const KIND_ICONS: Record<string, string> = {
-  service: "⚙️",
-  database: "🗄️",
-  queue: "📨",
-  gateway: "🚪",
-  external: "🌐",
-};
-
-export function BaseSystemNode({ data, selected }: NodeProps) {
+export function BaseSystemNode({ data, selected, type }: NodeProps) {
   const nodeData = data as SystemNodeData;
   const visual = nodeData.visual;
-  const icon = nodeData.icon ?? KIND_ICONS[nodeData.kind] ?? "📦";
+  const icon = resolveNodeIcon(
+    nodeData.icon,
+    (nodeData.kind ?? type ?? "service") as NodeKind,
+    nodeData.label,
+  );
 
   const style: CSSProperties = {
     borderColor: visual?.borderColor ?? (selected ? "#38bdf8" : "#64748b"),
@@ -36,7 +46,10 @@ export function BaseSystemNode({ data, selected }: NodeProps) {
 
   return (
     <div className="sc-node" style={style}>
-      <Handle type="target" position={Position.Left} className="sc-handle" />
+      {HANDLE_SIDES.flatMap(({ id, position, className }) => [
+        <Handle key={`${id}-target`} type="target" id={id} position={position} className={className} />,
+        <Handle key={`${id}-source`} type="source" id={id} position={position} className={className} />,
+      ])}
       <div className="sc-node-header">
         <span className="sc-node-icon">{icon}</span>
         <div>
@@ -70,7 +83,6 @@ export function BaseSystemNode({ data, selected }: NodeProps) {
       {visual?.badge && (
         <div className="sc-node-badge">{visual.badge}</div>
       )}
-      <Handle type="source" position={Position.Right} className="sc-handle" />
     </div>
   );
 }

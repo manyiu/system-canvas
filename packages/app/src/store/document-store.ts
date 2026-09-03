@@ -4,7 +4,7 @@ import type {
   SystemDocument,
   SystemGraph,
 } from "@system-canvas/core";
-import { getPattern, listPatterns } from "@system-canvas/patterns";
+import { getExample, listExamples } from "@system-canvas/patterns";
 import { graphNeedsLayout, layoutGraph } from "@system-canvas/ui";
 import { create } from "zustand";
 
@@ -15,8 +15,8 @@ interface DocumentStore {
   dslText: string;
   parseError: string | null;
   syncSource: SyncSource;
-  /** Currently loaded template id, or null when the document diverged via DSL. */
-  loadedPatternId: string | null;
+  /** Currently loaded example id, or null when the document diverged via DSL. */
+  loadedExampleId: string | null;
   selectedScenarioIndex: number;
   selectedStepIndex: number;
   playbackState: PlaybackState;
@@ -25,7 +25,7 @@ interface DocumentStore {
 
   setFromDsl: (text: string) => void;
   setFromCanvas: (graph: SystemGraph) => void;
-  loadPattern: (id: string) => void;
+  loadExample: (id: string) => void;
   autoLayout: () => void;
   selectScenario: (index: number) => void;
   selectStep: (index: number) => void;
@@ -35,7 +35,6 @@ interface DocumentStore {
   pause: () => void;
   stepForward: () => void;
   stepBack: () => void;
-  /** Advance one step while playing; pauses at the end. */
   tickPlayback: () => void;
   resetSkipDslParse: () => void;
 }
@@ -66,11 +65,11 @@ function ensureLaidOut(document: SystemDocument): SystemDocument {
   return { ...document, graph: layoutGraph(document.graph) };
 }
 
-function scenarioIndexForPattern(
+function scenarioIndexForExample(
   document: SystemDocument,
-  patternId: string,
+  exampleId: string,
 ): number {
-  const meta = listPatterns().find((p) => p.id === patternId);
+  const meta = listExamples().find((e) => e.id === exampleId);
   if (!meta) return 0;
   const index = document.scenarios.findIndex(
     (s) => s.id === meta.defaultScenarioId,
@@ -78,11 +77,11 @@ function scenarioIndexForPattern(
   return index >= 0 ? index : 0;
 }
 
-const initialPatternId = "outbox";
-const initialDoc = ensureLaidOut(getPattern(initialPatternId));
-const initialScenarioIndex = scenarioIndexForPattern(
+const initialExampleId = "bitly";
+const initialDoc = ensureLaidOut(getExample(initialExampleId));
+const initialScenarioIndex = scenarioIndexForExample(
   initialDoc,
-  initialPatternId,
+  initialExampleId,
 );
 
 export const useDocumentStore = create<DocumentStore>((set, get) => ({
@@ -90,7 +89,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
   dslText: serializeDsl(initialDoc),
   parseError: null,
   syncSource: "init",
-  loadedPatternId: initialPatternId,
+  loadedExampleId: initialExampleId,
   selectedScenarioIndex: initialScenarioIndex,
   selectedStepIndex: 0,
   playbackState: "idle",
@@ -107,7 +106,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
         dslText: needsLayout ? serializeDsl(document) : text,
         parseError: null,
         syncSource: "dsl",
-        loadedPatternId: null,
+        loadedExampleId: null,
         skipNextDslParse: false,
         selectedScenarioIndex: 0,
         selectedStepIndex: 0,
@@ -135,19 +134,28 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
     });
   },
 
-  loadPattern: (id) => {
-    const document = ensureLaidOut(getPattern(id));
+  loadExample: (id) => {
+    const document = ensureLaidOut(getExample(id));
     set({
       ...withSerializedDsl(document, "pattern"),
-      loadedPatternId: id,
-      selectedScenarioIndex: scenarioIndexForPattern(document, id),
+      loadedExampleId: id,
+      selectedScenarioIndex: scenarioIndexForExample(document, id),
       selectedStepIndex: 0,
       playbackState: "idle",
     });
   },
 
   autoLayout: () => {
-    const { document } = get();
+    const { document, loadedExampleId } = get();
+    if (loadedExampleId) {
+      const meta = listExamples().find((e) => e.id === loadedExampleId);
+      if (meta?.layoutHint === "manual") {
+        const ok = window.confirm(
+          "This example uses a hand-tuned layout. Auto Layout may produce a messy graph. Continue?",
+        );
+        if (!ok) return;
+      }
+    }
     const laidOut = layoutGraph(document.graph);
     get().setFromCanvas(laidOut);
   },
@@ -244,3 +252,13 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
     set({ skipNextDslParse: false });
   },
 }));
+
+/** @deprecated Use loadedExampleId */
+export function useLoadedPatternId() {
+  return useDocumentStore((s) => s.loadedExampleId);
+}
+
+/** @deprecated Use loadExample */
+export function useLoadPattern() {
+  return useDocumentStore((s) => s.loadExample);
+}
