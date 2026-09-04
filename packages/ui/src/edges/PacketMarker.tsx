@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { EdgeLabelRenderer } from "@xyflow/react";
 import type { PacketFlight } from "./packet-flight.js";
 
 interface PacketMarkerProps {
@@ -97,34 +98,26 @@ export function PacketMarker({ path, flight }: PacketMarkerProps) {
   if (!position) return null;
 
   const label = flight.label ?? flight.payloadType;
+  const deliveryClass =
+    flight.delivery === "async" ? " sc-packet-dot-async" : " sc-packet-dot-sync";
 
+  // Offset so the 12×12 dot center sits on the path point (not the chip's top-left).
+  // Flex layout gives the host a non-zero bbox for Playwright toBeVisible().
   return (
-    <g
-      className="sc-packet"
-      data-testid="payload-packet"
-      data-channel-id={flight.channelId}
-      data-payload-type={flight.payloadType}
-      data-status={status}
-      transform={`translate(${position.x}, ${position.y})`}
-      style={{ pointerEvents: "none" }}
-    >
-      <circle
-        className={`sc-packet-dot${flight.delivery === "async" ? " sc-packet-dot-async" : " sc-packet-dot-sync"}`}
-        r={6}
-        cx={0}
-        cy={0}
-      />
-      <rect
-        className="sc-packet-label-bg"
-        x={8}
-        y={-10}
-        width={Math.max(36, label.length * 6.2)}
-        height={16}
-        rx={3}
-      />
-      <text className="sc-packet-label" x={12} y={2}>
-        {label}
-      </text>
-    </g>
+    <EdgeLabelRenderer>
+      <div
+        className="sc-packet"
+        data-testid="payload-packet"
+        data-channel-id={flight.channelId}
+        data-payload-type={flight.payloadType}
+        data-status={status}
+        style={{
+          transform: `translate(${position.x - 6}px, ${position.y - 6}px)`,
+        }}
+      >
+        <span className={`sc-packet-dot${deliveryClass}`} />
+        <span className="sc-packet-label">{label}</span>
+      </div>
+    </EdgeLabelRenderer>
   );
 }

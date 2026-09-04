@@ -145,33 +145,48 @@
   color: #f8fafc;
 }
 
+/* HTML chip via EdgeLabelRenderer — above nodes (selected ≈1000).
+   z-index 1001 matches idle labels; active labels (1002) stay on top. */
 .sc-packet {
+  position: absolute;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  height: 12px;
+  gap: 2px;
   pointer-events: none;
 }
 
 .sc-packet-dot {
-  stroke: #0f172a;
-  stroke-width: 1.5;
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 1.5px solid #0f172a;
 }
 
 .sc-packet-dot-sync {
-  fill: #60a5fa;
+  background: #60a5fa;
 }
 
 .sc-packet-dot-async {
-  fill: #fbbf24;
-}
-
-.sc-packet-label-bg {
-  fill: #1e293b;
-  stroke: #475569;
-  stroke-width: 1;
-  opacity: 0.95;
+  background: #fbbf24;
 }
 
 .sc-packet-label {
-  fill: #e2e8f0;
+  display: flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 6px;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 3px;
+  opacity: 0.95;
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-size: 9px;
   font-weight: 600;
+  line-height: 1;
+  color: #e2e8f0;
+  white-space: nowrap;
 }
