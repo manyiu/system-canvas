@@ -124,7 +124,10 @@ export function toFlowGraph(
       animated: shouldAnimateChannel(channel.delivery, highlighted),
       data: {
         channelLabel: channel.label,
-        payloadType: payloadLabel ?? channel.payloadType,
+        // Schema payload type — do not overwrite with live interaction labels.
+        payloadType: channel.payloadType,
+        // Live step payload type when this channel is active in playback.
+        ...(payloadLabel ? { interactionLabel: payloadLabel } : {}),
         delivery: channel.delivery,
         relationship: channel.relationship,
         payloadKind: channel.payloadKind,

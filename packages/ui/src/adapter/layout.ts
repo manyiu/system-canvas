@@ -16,7 +16,8 @@ export function layoutGraph(graph: SystemGraph): SystemGraph {
   g.setGraph({
     rankdir: "LR",
     nodesep: 80,
-    ranksep: 120,
+    // Extra rank gap so channel label chips clear node bodies on short hops.
+    ranksep: 160,
     ranker: "network-simplex",
   });
 

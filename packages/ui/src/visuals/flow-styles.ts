@@ -68,3 +68,37 @@ export function formatChannelLabel(
   if (prefix) return prefix;
   return canonical || undefined;
 }
+
+/** Idle density: relationship, else canonical name, else delivery. */
+export function compactChannelLabel(
+  delivery: FlowDelivery | undefined,
+  label?: string,
+  relationship?: RelationshipKind,
+): string | undefined {
+  const canonical = label
+    ? stripChannelLabelPrefix(label, delivery, relationship)
+    : undefined;
+  if (relationship) return relationship;
+  if (canonical) return canonical;
+  if (delivery) return delivery;
+  return undefined;
+}
+
+export function resolveChannelEdgeLabel(options: {
+  highlighted?: boolean;
+  selected?: boolean;
+  delivery?: FlowDelivery;
+  label?: string;
+  relationship?: RelationshipKind;
+}): string | undefined {
+  const expanded = formatChannelLabel(
+    options.delivery,
+    options.label,
+    options.relationship,
+  );
+  if (options.highlighted || options.selected) return expanded;
+  return (
+    compactChannelLabel(options.delivery, options.label, options.relationship) ??
+    expanded
+  );
+}

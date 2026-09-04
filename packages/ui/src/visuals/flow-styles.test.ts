@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  compactChannelLabel,
   formatChannelLabel,
+  resolveChannelEdgeLabel,
 } from "./flow-styles.ts";
 import { stripChannelLabelPrefix } from "@system-canvas/core";
 
@@ -39,6 +41,51 @@ describe("formatChannelLabel", () => {
     assert.equal(
       formatChannelLabel("async", "async · poll · poll", "poll"),
       "async · poll · poll",
+    );
+  });
+});
+
+describe("compactChannelLabel", () => {
+  it("prefers relationship over canonical name", () => {
+    assert.equal(compactChannelLabel("sync", "forward", "command"), "command");
+  });
+
+  it("falls back to canonical then delivery", () => {
+    assert.equal(compactChannelLabel("sync", "forward"), "forward");
+    assert.equal(compactChannelLabel("async"), "async");
+  });
+});
+
+describe("resolveChannelEdgeLabel", () => {
+  it("uses compact text when idle", () => {
+    assert.equal(
+      resolveChannelEdgeLabel({
+        delivery: "sync",
+        label: "forward",
+        relationship: "command",
+      }),
+      "command",
+    );
+  });
+
+  it("expands when highlighted or selected", () => {
+    assert.equal(
+      resolveChannelEdgeLabel({
+        highlighted: true,
+        delivery: "sync",
+        label: "forward",
+        relationship: "command",
+      }),
+      "sync · command · forward",
+    );
+    assert.equal(
+      resolveChannelEdgeLabel({
+        selected: true,
+        delivery: "sync",
+        label: "forward",
+        relationship: "command",
+      }),
+      "sync · command · forward",
     );
   });
 });
