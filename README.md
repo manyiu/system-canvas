@@ -9,11 +9,14 @@ System Canvas helps architects and engineers **see** how distributed patterns wo
 ## Architecture
 
 ```
-DSL text / Pattern templates
+DSL text / Pattern templates / Custom pattern DSL
         ↓
    SystemDocument (AST)
    ├── SystemGraph (nodes + channels)
+   ├── patterns? (CustomPatternDefinition)
    └── Scenario (steps → primitives + visuals)
+        ↓
+   expandPattern (Step 4) → linear steps
         ↓
    Execution Engine (Step 3) → React Flow Canvas (Step 2)
 ```
@@ -24,7 +27,7 @@ DSL text / Pattern templates
 | --- | --- |
 | `@system-canvas/core` | AST types, primitives, visual directives, executor + timeline |
 | `@system-canvas/dsl` | Peggy parser + compiler (`parseDsl()`, `serializeDsl()`) |
-| `@system-canvas/patterns` | 10 built-in pattern templates + custom pattern POC |
+| `@system-canvas/patterns` | Hello Interview examples + custom pattern demos (Exponential Backoff) |
 | `@system-canvas/ui` | React Flow canvas, adapters, visual directive styling |
 | `@system-canvas/app` | Vite demo — split-pane DSL + canvas editor |
 
@@ -94,7 +97,7 @@ console.log(doc.scenarios[0].steps[0].primitives); // compiled emit/mutate primi
 import { getExample, listExamples } from "@system-canvas/patterns";
 
 const bitly = getExample("bitly");
-const all = listExamples(); // 35 Hello Interview examples
+const all = listExamples(); // Hello Interview + custom pattern demos
 ```
 
 ## Hello Interview Examples
@@ -106,7 +109,7 @@ Examples are grouped by difficulty in the **Examples** menu:
 | Easy | 4 | Bitly, Dropbox, Yelp, Local Delivery |
 | Medium | 16 | Ticketmaster, FB News Feed, WhatsApp, Rate Limiter, YouTube, Notification System |
 | Hard | 11 | Uber, Web Crawler, Payment System, ChatGPT |
-| More Practice | 4 | Game Leaderboard, GitHub Actions |
+| More Practice | 6 | Game Leaderboard, GitHub Actions, Exponential Backoff |
 
 Each example combines multiple services, caches, queues, and failure scenarios with step-by-step playback.
 
@@ -138,6 +141,38 @@ system OrderFlow v1 {
 }
 ```
 
+Custom pattern definitions expand at parse time into linear steps (retries are unrolled; invoke outcomes are scripted). `apply` is compile-time only — `serializeDsl` writes the expanded steps (and keeps `pattern` definitions), not the original `apply` block.
+
+```
+pattern ExponentialBackoff {
+  param maxRetries = 3
+  onEvent Request(payload) {
+    invoke target.process(payload) {
+      onFailure {
+        if (context.attempt < maxRetries) {
+          visual.hold(payload, duration: 1000, label: "Backoff")
+          retry()
+        } else {
+          emit DeadLetter(payload) -> DLQ
+        }
+      }
+    }
+  }
+}
+
+scenario "Retry then succeed" {
+  apply ExponentialBackoff {
+    source: Gateway
+    target: PaymentService
+    channel: ch_req
+    dlqChannel: ch_dlq
+    DLQ: DLQ
+    event: Request
+    outcomes: [fail, fail, ok]
+  }
+}
+```
+
 ### Keywords
 
 | Keyword | Meaning |
@@ -147,6 +182,9 @@ system OrderFlow v1 {
 | `port Node.port` | Sub-component (e.g. token bucket on gateway) |
 | `scenario "..."` | Simulation script |
 | `step "..."` | One timeline frame |
+| `pattern Name { … }` | Custom pattern definition (`onEvent`, `retry`, …) |
+| `apply Pattern { … }` | Expand a pattern into linear steps (scripted outcomes) |
+| `[pattern: id]` | Optional tag on a hand-written step (not a definition) |
 
 ## Example Catalog
 
@@ -159,7 +197,7 @@ See the **Examples** menu in the app for the full Hello Interview catalog (35 co
 | **Step 1** | Monorepo, AST, DSL parser, pattern library |
 | **Step 2** | React Flow UI, Vite demo, bidirectional DSL ↔ canvas sync |
 | **Step 3** | Execution engine + timeline playback + payload animation on channels |
-| **Step 4** (next) | Custom pattern behavioral DSL (`pattern { onEvent ... }`) |
+| **Step 4** | Custom pattern behavioral DSL (`pattern { onEvent ... }`, compile-time expand) |
 
 ## License
 

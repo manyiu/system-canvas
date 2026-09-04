@@ -1,4 +1,8 @@
 import { defineExample } from "./define-example.js";
+import {
+  exponentialBackoffDlqExample,
+  exponentialBackoffExample,
+} from "../custom/exponential-backoff.js";
 
 export const foodReviewAppExample = defineExample({
   id: "food-review-app",
@@ -225,4 +229,6 @@ export const communityExamples = [
   gameLeaderboardExample,
   donationsWebsiteExample,
   githubActionsExample,
+  exponentialBackoffExample,
+  exponentialBackoffDlqExample,
 ];

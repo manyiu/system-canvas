@@ -1,9 +1,15 @@
 import type {
   Channel,
+  CustomPatternDefinition,
   ExecutionStep,
+  InvokeOutcome,
   MutateStatePrimitive,
   NodePort,
   Payload,
+  PatternEventHandler,
+  PatternExpandContext,
+  PatternExpr,
+  PatternStmt,
   Primitive,
   Scenario,
   StepAnimation,
@@ -13,7 +19,11 @@ import type {
   SystemNode,
   VisualDirective,
 } from "@system-canvas/core";
-import { parsePayloadKind, parseRelationshipKind } from "@system-canvas/core";
+import {
+  expandPattern,
+  parsePayloadKind,
+  parseRelationshipKind,
+} from "@system-canvas/core";
 
 interface ParsedDocument {
   type: "document";
@@ -22,6 +32,7 @@ interface ParsedDocument {
   nodes: ParsedNode[];
   ports: ParsedPort[];
   channels: ParsedChannel[];
+  patterns: ParsedPattern[];
   scenarios: ParsedScenario[];
 }
 
@@ -47,10 +58,74 @@ interface ParsedChannel {
   attrs: Record<string, unknown>;
 }
 
+interface ParsedPattern {
+  type: "pattern";
+  name: string;
+  params: { type: "param"; name: string; defaultValue: unknown }[];
+  handlers: {
+    type: "handler";
+    event: string;
+    payloadBinding: string;
+    body: ParsedPatternStmt[];
+  }[];
+}
+
+type ParsedPatternStmt =
+  | {
+      type: "invoke";
+      target: string;
+      method: string;
+      payloadBinding: string;
+      onSuccess?: ParsedPatternStmt[];
+      onFailure?: ParsedPatternStmt[];
+    }
+  | {
+      type: "if";
+      condition: ParsedPatternExpr;
+      then: ParsedPatternStmt[];
+      else?: ParsedPatternStmt[];
+    }
+  | { type: "retry" }
+  | {
+      type: "hold";
+      payloadBinding: string;
+      durationMs: number;
+      label?: string;
+    }
+  | {
+      type: "emit";
+      payloadType: string;
+      payloadBinding: string;
+      target: string;
+    }
+  | {
+      type: "mutate";
+      nodeId: string;
+      patch: Record<string, unknown>;
+    };
+
+type ParsedPatternExpr =
+  | { type: "literal"; value: number | string | boolean }
+  | { type: "ref"; path: string[] }
+  | {
+      type: "compare";
+      op: "<" | "<=" | ">" | ">=" | "==" | "!=";
+      left: ParsedPatternExpr;
+      right: ParsedPatternExpr;
+    };
+
 interface ParsedScenario {
   type: "scenario";
   name: string;
-  steps: ParsedStep[];
+  steps: ParsedScenarioItem[];
+}
+
+type ParsedScenarioItem = ParsedStep | ParsedApply;
+
+interface ParsedApply {
+  type: "apply";
+  pattern: string;
+  bindings: Record<string, unknown>;
 }
 
 interface ParsedStep {
@@ -103,6 +178,249 @@ function parseDelivery(value: unknown): Channel["delivery"] {
   return undefined;
 }
 
+function toPatternExpr(expr: ParsedPatternExpr): PatternExpr {
+  switch (expr.type) {
+    case "literal":
+      return { kind: "literal", value: expr.value };
+    case "ref":
+      return { kind: "ref", path: expr.path };
+    case "compare":
+      return {
+        kind: "compare",
+        op: expr.op,
+        left: toPatternExpr(expr.left),
+        right: toPatternExpr(expr.right),
+      };
+  }
+}
+
+function toPatternStmt(stmt: ParsedPatternStmt): PatternStmt {
+  switch (stmt.type) {
+    case "invoke":
+      return {
+        kind: "invoke",
+        target: stmt.target,
+        method: stmt.method,
+        payloadBinding: stmt.payloadBinding,
+        onSuccess: stmt.onSuccess?.map(toPatternStmt),
+        onFailure: stmt.onFailure?.map(toPatternStmt),
+      };
+    case "if":
+      return {
+        kind: "if",
+        condition: toPatternExpr(stmt.condition),
+        then: stmt.then.map(toPatternStmt),
+        else: stmt.else?.map(toPatternStmt),
+      };
+    case "retry":
+      return { kind: "retry" };
+    case "hold":
+      return {
+        kind: "hold",
+        payloadBinding: stmt.payloadBinding,
+        durationMs: stmt.durationMs,
+        label: stmt.label,
+      };
+    case "emit":
+      return {
+        kind: "emit",
+        payloadType: stmt.payloadType,
+        payloadBinding: stmt.payloadBinding,
+        target: stmt.target,
+      };
+    case "mutate":
+      return {
+        kind: "mutate",
+        nodeId: stmt.nodeId,
+        patch: stmt.patch,
+      };
+  }
+}
+
+function toCustomPattern(parsed: ParsedPattern): CustomPatternDefinition {
+  const handlers: PatternEventHandler[] = parsed.handlers.map((h) => ({
+    event: h.event,
+    payloadBinding: h.payloadBinding,
+    body: h.body.map(toPatternStmt),
+  }));
+  return {
+    id: parsed.name,
+    name: parsed.name,
+    params: parsed.params.map((p) => ({
+      name: p.name,
+      defaultValue: p.defaultValue,
+    })),
+    handlers,
+  };
+}
+
+function asString(value: unknown, key: string): string {
+  if (typeof value === "string") return value;
+  throw new Error(`apply binding "${key}" must be a string`);
+}
+
+function asOutcomes(value: unknown): InvokeOutcome[] {
+  if (!Array.isArray(value)) {
+    throw new Error('apply binding "outcomes" must be an array of ok|fail');
+  }
+  if (value.length === 0) {
+    throw new Error('apply binding "outcomes" must be a non-empty list of ok|fail');
+  }
+  return value.map((v) => {
+    if (v === "ok" || v === "fail") return v;
+    throw new Error(`invalid outcome "${String(v)}" (expected ok|fail)`);
+  });
+}
+
+function buildApplyContext(
+  bindings: Record<string, unknown>,
+): PatternExpandContext {
+  const source = asString(bindings.source, "source");
+  const target = asString(bindings.target, "target");
+  const channelId = asString(bindings.channel, "channel");
+  const event = asString(bindings.event ?? "Request", "event");
+  const outcomes = asOutcomes(bindings.outcomes ?? ["ok"]);
+
+  const named: Record<string, string> = { target };
+  if (typeof bindings.DLQ === "string") named.DLQ = bindings.DLQ;
+  if (typeof bindings.dlq === "string") named.DLQ = bindings.dlq;
+
+  for (const [k, v] of Object.entries(bindings)) {
+    if (
+      typeof v === "string" &&
+      k !== "source" &&
+      k !== "target" &&
+      k !== "channel" &&
+      k !== "dlqChannel" &&
+      k !== "event" &&
+      k !== "DLQ" &&
+      k !== "dlq"
+    ) {
+      named[k] = v;
+    }
+  }
+
+  const params: Record<string, unknown> = {};
+  if (typeof bindings.maxRetries === "number") {
+    params.maxRetries = bindings.maxRetries;
+  }
+
+  return {
+    sourceNodeId: source,
+    bindings: named,
+    channelId,
+    dlqChannelId:
+      typeof bindings.dlqChannel === "string"
+        ? bindings.dlqChannel
+        : undefined,
+    event,
+    outcomes,
+    params: Object.keys(params).length > 0 ? params : undefined,
+  };
+}
+
+function buildStepFromParsed(
+  step: ParsedStep,
+  index: number,
+  ensureChannel: (
+    sourceRef: NodeRefParsed,
+    targetRef: NodeRefParsed,
+    label?: string,
+  ) => string,
+): ExecutionStep {
+  const interactions: StepInteraction[] = [];
+  const animations: StepAnimation[] = [];
+  const primitives: Primitive[] = [];
+  const visuals: VisualDirective[] = [];
+
+  for (const item of step.body) {
+    if (item.type === "interaction") {
+      const interaction: StepInteraction = {
+        source: toNodeRef(item.source),
+        target: toNodeRef(item.target),
+        label: item.label,
+        annotations: item.annotations,
+      };
+      interactions.push(interaction);
+
+      const sourceId = resolveNodeId(item.source);
+      const targetId = resolveNodeId(item.target);
+      const channelId = ensureChannel(item.source, item.target, item.label);
+
+      if (sourceId === targetId) {
+        const mutate: MutateStatePrimitive = {
+          kind: "mutate",
+          nodeId: sourceId,
+          patch: { lastAction: item.label },
+        };
+        primitives.push(mutate);
+      } else {
+        const payload: Payload = {
+          id: makeId("payload"),
+          type: "message",
+          data: { label: item.label },
+        };
+        primitives.push({
+          kind: "emit",
+          nodeId: sourceId,
+          channelId,
+          payload,
+        });
+      }
+
+      if (item.annotations?.includes("Transaction")) {
+        visuals.push({
+          kind: "highlight",
+          targetId: targetId,
+          color: "yellow",
+          label: "Transaction",
+        });
+      }
+    } else if (item.type === "animate") {
+      const payload: Payload = {
+        id: makeId("payload"),
+        type: "event",
+        data: item.data,
+      };
+      animations.push({ payload });
+    } else if (item.type === "emit") {
+      const sourceId = resolveNodeId(item.source);
+      const channelId = ensureChannel(item.source, item.target);
+      const payload: Payload = {
+        id: makeId("payload"),
+        type: item.payloadType,
+        data: item.data,
+      };
+      primitives.push({
+        kind: "emit",
+        nodeId: sourceId,
+        channelId,
+        payload,
+      });
+    } else if (item.type === "mutate") {
+      primitives.push({
+        kind: "mutate",
+        nodeId: resolveNodeId(item.node),
+        patch: item.patch,
+      });
+    } else if (item.type === "delay") {
+      primitives.push({ kind: "delay", durationMs: item.durationMs });
+    }
+  }
+
+  return {
+    index,
+    timestamp: index * 1000,
+    name: step.name,
+    pattern: step.pattern,
+    interactions,
+    animations: animations.length > 0 ? animations : undefined,
+    visuals: visuals.length > 0 ? visuals : undefined,
+    primitives,
+    traces: [],
+  };
+}
+
 export function buildSystemDocument(parsed: ParsedDocument): SystemDocument {
   const graphId = parsed.name;
   const channelMap = new Map<string, Channel>();
@@ -130,7 +448,6 @@ export function buildSystemDocument(parsed: ParsedDocument): SystemDocument {
   ): string => {
     const source = resolveNodeId(sourceRef);
     const target = resolveNodeId(targetRef);
-    const key = channelKey(source, target);
     const existing = [...channelMap.values()].find(
       (c) => c.source === source && c.target === target,
     );
@@ -184,6 +501,15 @@ export function buildSystemDocument(parsed: ParsedDocument): SystemDocument {
     node.ports = portIndex.get(node.id);
   }
 
+  const patterns = (parsed.patterns ?? []).map(toCustomPattern);
+  const patternById = new Map<string, (typeof patterns)[number]>();
+  for (const pattern of patterns) {
+    if (patternById.has(pattern.id)) {
+      throw new Error(`Duplicate pattern definition "${pattern.id}"`);
+    }
+    patternById.set(pattern.id, pattern);
+  }
+
   const graph: SystemGraph = {
     id: graphId,
     name: parsed.name,
@@ -193,103 +519,34 @@ export function buildSystemDocument(parsed: ParsedDocument): SystemDocument {
   };
 
   const scenarios: Scenario[] = parsed.scenarios.map((s) => {
-    const steps: ExecutionStep[] = s.steps.map((step, index) => {
-      const interactions: StepInteraction[] = [];
-      const animations: StepAnimation[] = [];
-      const primitives: Primitive[] = [];
-      const visuals: VisualDirective[] = [];
+    const steps: ExecutionStep[] = [];
 
-      for (const item of step.body) {
-        if (item.type === "interaction") {
-          const interaction: StepInteraction = {
-            source: toNodeRef(item.source),
-            target: toNodeRef(item.target),
-            label: item.label,
-            annotations: item.annotations,
-          };
-          interactions.push(interaction);
-
-          const sourceId = resolveNodeId(item.source);
-          const targetId = resolveNodeId(item.target);
-          const channelId = ensureChannel(
-            item.source,
-            item.target,
-            item.label,
+    for (const item of s.steps) {
+      if (item.type === "apply") {
+        const pattern = patternById.get(item.pattern);
+        if (!pattern) {
+          throw new Error(
+            `apply references unknown pattern "${item.pattern}"`,
           );
-
-          if (sourceId === targetId) {
-            const mutate: MutateStatePrimitive = {
-              kind: "mutate",
-              nodeId: sourceId,
-              patch: { lastAction: item.label },
-            };
-            primitives.push(mutate);
-          } else {
-            const payload: Payload = {
-              id: makeId("payload"),
-              type: "message",
-              data: { label: item.label },
-            };
-            primitives.push({
-              kind: "emit",
-              nodeId: sourceId,
-              channelId,
-              payload,
-            });
-          }
-
-          if (item.annotations?.includes("Transaction")) {
-            visuals.push({
-              kind: "highlight",
-              targetId: targetId,
-              color: "yellow",
-              label: "Transaction",
-            });
-          }
-        } else if (item.type === "animate") {
-          const payload: Payload = {
-            id: makeId("payload"),
-            type: "event",
-            data: item.data,
-          };
-          animations.push({ payload });
-        } else if (item.type === "emit") {
-          const sourceId = resolveNodeId(item.source);
-          const channelId = ensureChannel(item.source, item.target);
-          const payload: Payload = {
-            id: makeId("payload"),
-            type: item.payloadType,
-            data: item.data,
-          };
-          primitives.push({
-            kind: "emit",
-            nodeId: sourceId,
-            channelId,
-            payload,
-          });
-        } else if (item.type === "mutate") {
-          primitives.push({
-            kind: "mutate",
-            nodeId: resolveNodeId(item.node),
-            patch: item.patch,
-          });
-        } else if (item.type === "delay") {
-          primitives.push({ kind: "delay", durationMs: item.durationMs });
         }
+        const ctx = buildApplyContext(item.bindings);
+        const expanded = expandPattern(pattern, {
+          ...ctx,
+          patternTag: pattern.id,
+        });
+        for (const step of expanded) {
+          steps.push({
+            ...step,
+            index: steps.length,
+            timestamp: steps.length * 1000,
+          });
+        }
+      } else {
+        steps.push(
+          buildStepFromParsed(item, steps.length, ensureChannel),
+        );
       }
-
-      return {
-        index,
-        timestamp: index * 1000,
-        name: step.name,
-        pattern: step.pattern,
-        interactions,
-        animations: animations.length > 0 ? animations : undefined,
-        visuals: visuals.length > 0 ? visuals : undefined,
-        primitives,
-        traces: [],
-      };
-    });
+    }
 
     return {
       id: makeId("scenario"),
@@ -300,5 +557,9 @@ export function buildSystemDocument(parsed: ParsedDocument): SystemDocument {
     };
   });
 
-  return { graph, scenarios };
+  return {
+    graph,
+    scenarios,
+    patterns: patterns.length > 0 ? patterns : undefined,
+  };
 }

@@ -1,6 +1,9 @@
 import type {
   Channel,
+  CustomPatternDefinition,
   NodeRef,
+  PatternExpr,
+  PatternStmt,
   Scenario,
   StepInteraction,
   SystemDocument,
@@ -88,6 +91,99 @@ function serializePorts(nodes: SystemNode[]): string[] {
   return lines;
 }
 
+function serializeExpr(expr: PatternExpr): string {
+  switch (expr.kind) {
+    case "literal":
+      return formatValue(expr.value);
+    case "ref":
+      return expr.path.join(".");
+    case "compare":
+      return `${serializeExpr(expr.left)} ${expr.op} ${serializeExpr(expr.right)}`;
+  }
+}
+
+function serializePatternStmts(
+  stmts: PatternStmt[],
+  level: number,
+): string[] {
+  const lines: string[] = [];
+  for (const stmt of stmts) {
+    switch (stmt.kind) {
+      case "invoke": {
+        lines.push(
+          `${indent(level)}invoke ${stmt.target}.${stmt.method}(${stmt.payloadBinding}) {`,
+        );
+        if (stmt.onSuccess && stmt.onSuccess.length > 0) {
+          lines.push(`${indent(level + 1)}onSuccess {`);
+          lines.push(...serializePatternStmts(stmt.onSuccess, level + 2));
+          lines.push(`${indent(level + 1)}}`);
+        }
+        if (stmt.onFailure && stmt.onFailure.length > 0) {
+          lines.push(`${indent(level + 1)}onFailure {`);
+          lines.push(...serializePatternStmts(stmt.onFailure, level + 2));
+          lines.push(`${indent(level + 1)}}`);
+        }
+        lines.push(`${indent(level)}}`);
+        break;
+      }
+      case "if": {
+        lines.push(
+          `${indent(level)}if (${serializeExpr(stmt.condition)}) {`,
+        );
+        lines.push(...serializePatternStmts(stmt.then, level + 1));
+        lines.push(`${indent(level)}}`);
+        if (stmt.else && stmt.else.length > 0) {
+          lines.push(`${indent(level)}else {`);
+          lines.push(...serializePatternStmts(stmt.else, level + 1));
+          lines.push(`${indent(level)}}`);
+        }
+        break;
+      }
+      case "retry":
+        lines.push(`${indent(level)}retry()`);
+        break;
+      case "hold": {
+        const label = stmt.label
+          ? `, label: ${escapeString(stmt.label)}`
+          : "";
+        lines.push(
+          `${indent(level)}visual.hold(${stmt.payloadBinding}, duration: ${stmt.durationMs}${label})`,
+        );
+        break;
+      }
+      case "emit":
+        lines.push(
+          `${indent(level)}emit ${stmt.payloadType}(${stmt.payloadBinding}) -> ${stmt.target}`,
+        );
+        break;
+      case "mutate":
+        lines.push(
+          `${indent(level)}mutate ${stmt.nodeId} ${formatValue(stmt.patch)}`,
+        );
+        break;
+    }
+  }
+  return lines;
+}
+
+function serializePattern(pattern: CustomPatternDefinition): string[] {
+  const lines: string[] = [`${indent(1)}pattern ${pattern.name} {`];
+  for (const param of pattern.params) {
+    lines.push(
+      `${indent(2)}param ${param.name} = ${formatValue(param.defaultValue)}`,
+    );
+  }
+  for (const handler of pattern.handlers) {
+    lines.push(
+      `${indent(2)}onEvent ${handler.event}(${handler.payloadBinding}) {`,
+    );
+    lines.push(...serializePatternStmts(handler.body, 3));
+    lines.push(`${indent(2)}}`);
+  }
+  lines.push(`${indent(1)}}`);
+  return lines;
+}
+
 function serializeInteraction(interaction: StepInteraction): string[] {
   const lines: string[] = [];
   const src = formatNodeRef(interaction.source);
@@ -155,7 +251,7 @@ function serializeScenario(
 }
 
 export function serializeDsl(doc: SystemDocument): string {
-  const { graph, scenarios } = doc;
+  const { graph, scenarios, patterns } = doc;
   const lines: string[] = [
     `system ${graph.id} ${graph.version} {`,
     "",
@@ -177,6 +273,14 @@ export function serializeDsl(doc: SystemDocument): string {
     lines.push("");
     for (const channel of graph.channels) {
       lines.push(`${indent(1)}${serializeChannel(channel)}`);
+    }
+  }
+
+  if (patterns && patterns.length > 0) {
+    lines.push("");
+    for (const pattern of patterns) {
+      lines.push(...serializePattern(pattern));
+      lines.push("");
     }
   }
 

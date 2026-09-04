@@ -81,6 +81,9 @@ export function createExecutor(): Executor {
       const traces: PacketTrace[] = [];
       let emitSequence = 0;
 
+      // Step 4: patterns expand into emit/mutate (+ delay as visual timing hint).
+      // invoke/retry are not executed as control-flow jumps — they are unrolled
+      // at expand time into linear steps.
       for (const primitive of step.primitives) {
         if (primitive.kind === "mutate") {
           applyMutate(nodeStates, primitive);

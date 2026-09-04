@@ -1,4 +1,5 @@
 import type {
+  CustomPatternDefinition,
   ExecutionStep,
   Payload,
   Scenario,
@@ -71,8 +72,13 @@ export function createGraph(
 export function createDocument(
   graph: SystemGraph,
   scenarios: Scenario[],
+  patterns?: CustomPatternDefinition[],
 ): SystemDocument {
-  return { graph, scenarios };
+  return {
+    graph,
+    scenarios,
+    patterns: patterns && patterns.length > 0 ? patterns : undefined,
+  };
 }
 
 export function node(

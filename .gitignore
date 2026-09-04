@@ -4,6 +4,9 @@ dist
 *.tsbuildinfo
 .DS_Store
 packages/dsl/src/generated
+# Accidental tsc declaration emit beside sources (package types ship from dist/)
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map
 /test-results/
 /playwright-report/
 /blob-report/

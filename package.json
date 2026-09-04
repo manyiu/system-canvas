@@ -12,7 +12,7 @@
     "dev:app": "turbo run dev --filter=@system-canvas/app...",
     "test:e2e": "playwright install chromium && playwright test",
     "test:e2e:ui": "playwright install chromium && playwright test --ui",
-    "test:unit": "turbo run build --filter=@system-canvas/core --filter=@system-canvas/patterns && node --experimental-strip-types --test packages/core/src/**/*.test.ts packages/ui/src/**/*.test.ts packages/patterns/src/**/*.test.ts",
+    "test:unit": "turbo run build --filter=@system-canvas/core --filter=@system-canvas/dsl --filter=@system-canvas/patterns && node --experimental-strip-types --test packages/core/src/**/*.test.ts packages/dsl/src/**/*.test.ts packages/ui/src/**/*.test.ts packages/patterns/src/**/*.test.ts",
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {

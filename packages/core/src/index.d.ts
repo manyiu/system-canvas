@@ -8,6 +8,7 @@ export * from "./ast/visuals.js";
 export * from "./ast/execution.js";
 export * from "./ast/patterns.js";
 export * from "./engine/executor.js";
+export * from "./engine/expand-pattern.js";
 export * from "./engine/step-resolution.js";
 export * from "./engine/timeline.js";
 export * from "./review/lint.js";
