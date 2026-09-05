@@ -109,6 +109,42 @@ test.describe("Architecture Canvas", () => {
     }
   });
 
+  test("hides MiniMap when the graph fits and shows it after zoom-in", async ({
+    page,
+  }) => {
+    const canvas = page.getByTestId("architecture-canvas");
+    const minimap = canvas.locator(".react-flow__minimap");
+
+    await page.getByRole("button", { name: "Fit View" }).click();
+    await expect(minimap).toHaveCount(0);
+
+    // Zoom in repeatedly until the overview navigator appears.
+    const zoomIn = page.getByRole("button", { name: "Zoom In" });
+    await expect
+      .poll(async () => {
+        if ((await minimap.count()) > 0) return true;
+        await zoomIn.click();
+        return (await minimap.count()) > 0;
+      })
+      .toBe(true);
+
+    await expect(minimap).toBeVisible();
+    const box = await minimap.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.width).toBeLessThanOrEqual(160);
+    expect(box!.height).toBeLessThanOrEqual(110);
+
+    const minimapNodes = minimap.locator(".react-flow__minimap-node");
+    await expect(minimapNodes).toHaveCount(BITLY_NODES.length);
+
+    // Playback sync must not strip measured sizes (empty MiniMap regression).
+    await page.getByRole("button", { name: /Persist to DB/ }).click();
+    await expect(minimapNodes).toHaveCount(BITLY_NODES.length);
+
+    await page.getByRole("button", { name: "Fit View" }).click();
+    await expect(minimap).toHaveCount(0);
+  });
+
   test("serialized DSL includes channel definitions", async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await page.getByRole("button", { name: "Copy DSL" }).click();

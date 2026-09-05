@@ -14,10 +14,18 @@ import {
   type EdgeChange,
   type Node,
   type NodeChange,
+  type OnMoveEnd,
   type OnConnect,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from "react";
 import type {
   ExecutionResult,
   PlaybackState,
@@ -27,6 +35,7 @@ import type {
 import { applyFlowChanges } from "../adapter/from-flow.js";
 import { toFlowGraph } from "../adapter/to-flow.js";
 import { edgeTypes } from "../edges/ChannelEdge.js";
+import type { SystemNodeData } from "../nodes/BaseSystemNode.js";
 import { nodeTypes } from "../nodes/index.js";
 import { NetworkSwimlanesOverlay } from "./NetworkSwimlanes.js";
 
@@ -38,6 +47,10 @@ export interface SystemCanvasProps {
   onGraphChange: (graph: SystemGraph) => void;
 }
 
+const MINIMAP_IDLE_COLOR = "#94a3b8";
+const MINIMAP_SELECTION_STROKE = "#38bdf8";
+const FIT_VIEW_PADDING = 0.2;
+
 function SystemCanvasInner({
   document,
   executionResult,
@@ -45,8 +58,9 @@ function SystemCanvasInner({
   playbackState = "idle",
   onGraphChange,
 }: SystemCanvasProps) {
-  const { fitView } = useReactFlow();
+  const { fitView, getNodes, getNodesBounds, getViewport } = useReactFlow();
   const nodesInitialized = useNodesInitialized();
+  const canvasRootRef = useRef<HTMLDivElement>(null);
   const flowGraph = useMemo(
     () =>
       toFlowGraph(document, {
@@ -60,10 +74,12 @@ function SystemCanvasInner({
 
   const [nodes, setNodes] = useState<Node[]>(flowGraph.nodes);
   const [edges, setEdges] = useState<Edge[]>(flowGraph.edges);
+  const [minimapNeeded, setMinimapNeeded] = useState(false);
   const nodesRef = useRef(nodes);
   const edgesRef = useRef(edges);
   const syncingRef = useRef(false);
   const syncIdRef = useRef(0);
+  const programmaticMoveRef = useRef(false);
 
   useEffect(() => {
     nodesRef.current = nodes;
@@ -79,10 +95,59 @@ function SystemCanvasInner({
   const graphKey = `${document.graph.id}:${document.graph.channels.length}:${document.graph.nodes.length}:${positionKey}:${executionResult?.step.index ?? "none"}`;
   const fitViewKey = `${document.graph.id}:${document.graph.channels.length}:${document.graph.nodes.length}`;
 
+  const updateMinimapNeeded = useCallback(() => {
+    const container = canvasRootRef.current;
+    if (!container || !nodesInitialized) {
+      setMinimapNeeded(false);
+      return;
+    }
+
+    const currentNodes = getNodes().filter((node) => !node.hidden);
+    if (currentNodes.length === 0) {
+      setMinimapNeeded(false);
+      return;
+    }
+
+    const { clientWidth: width, clientHeight: height } = container;
+    const { x, y, zoom } = getViewport();
+    if (width === 0 || height === 0 || zoom === 0) {
+      setMinimapNeeded(false);
+      return;
+    }
+
+    const bounds = getNodesBounds(currentNodes);
+    const visibleLeft = -x / zoom;
+    const visibleTop = -y / zoom;
+    const visibleRight = visibleLeft + width / zoom;
+    const visibleBottom = visibleTop + height / zoom;
+    // ~2px screen-space tolerance so fitView(padding: 0.2) still counts as "fits"
+    const epsilon = 2 / zoom;
+
+    const fits =
+      bounds.x >= visibleLeft - epsilon &&
+      bounds.y >= visibleTop - epsilon &&
+      bounds.x + bounds.width <= visibleRight + epsilon &&
+      bounds.y + bounds.height <= visibleBottom + epsilon;
+
+    setMinimapNeeded(!fits);
+  }, [getNodes, getNodesBounds, getViewport, nodesInitialized]);
+
   useEffect(() => {
     const syncId = ++syncIdRef.current;
     syncingRef.current = true;
-    setNodes(flowGraph.nodes);
+    setNodes((current) => {
+      const previousById = new Map(current.map((node) => [node.id, node]));
+      return flowGraph.nodes.map((node) => {
+        const previous = previousById.get(node.id);
+        if (!previous?.measured) return node;
+        return {
+          ...node,
+          measured: previous.measured,
+          ...(previous.width != null ? { width: previous.width } : {}),
+          ...(previous.height != null ? { height: previous.height } : {}),
+        };
+      });
+    });
     requestAnimationFrame(() => {
       if (syncId !== syncIdRef.current) return;
       setEdges(flowGraph.edges);
@@ -96,12 +161,33 @@ function SystemCanvasInner({
   useEffect(() => {
     if (!nodesInitialized || flowGraph.nodes.length === 0) return;
 
+    programmaticMoveRef.current = true;
+
     const frame = requestAnimationFrame(() => {
-      fitView({ padding: 0.2, duration: 200 });
+      void fitView({ padding: FIT_VIEW_PADDING, duration: 200 }).then(() => {
+        programmaticMoveRef.current = false;
+        updateMinimapNeeded();
+      });
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [fitViewKey, fitView, flowGraph.nodes.length, nodesInitialized]);
+  }, [fitViewKey, fitView, flowGraph.nodes.length, nodesInitialized, updateMinimapNeeded]);
+
+  useEffect(() => {
+    const container = canvasRootRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver(() => {
+      updateMinimapNeeded();
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [updateMinimapNeeded]);
+
+  useEffect(() => {
+    if (!nodesInitialized) return;
+    updateMinimapNeeded();
+  }, [nodes, nodesInitialized, updateMinimapNeeded]);
 
   const emitGraphChange = useCallback(
     (nextNodes: Node[], nextEdges: Edge[]) => {
@@ -113,10 +199,24 @@ function SystemCanvasInner({
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      if (syncingRef.current) return;
+      if (syncingRef.current) {
+        const dimensionChanges = changes.filter(
+          (change) => change.type === "dimensions",
+        );
+        if (dimensionChanges.length === 0) return;
+        setNodes((current) => applyNodeChanges(dimensionChanges, current));
+        return;
+      }
+
+      const dimensionOnly =
+        changes.length > 0 &&
+        changes.every((change) => change.type === "dimensions");
+
       setNodes((current) => {
         const next = applyNodeChanges(changes, current);
-        emitGraphChange(next, edgesRef.current);
+        if (!dimensionOnly) {
+          emitGraphChange(next, edgesRef.current);
+        }
         return next;
       });
     },
@@ -149,8 +249,45 @@ function SystemCanvasInner({
     [emitGraphChange],
   );
 
+  const onMoveEnd: OnMoveEnd = useCallback(() => {
+    if (programmaticMoveRef.current) {
+      programmaticMoveRef.current = false;
+    }
+    updateMinimapNeeded();
+  }, [updateMinimapNeeded]);
+
+  const minimapNodeColor = useCallback((node: Node) => {
+    const data = node.data as SystemNodeData;
+    return data.visual?.borderColor ?? MINIMAP_IDLE_COLOR;
+  }, []);
+
+  const minimapNodeStrokeColor = useCallback((node: Node) => {
+    return node.selected ? MINIMAP_SELECTION_STROKE : "transparent";
+  }, []);
+
+  const onMinimapNodeClick = useCallback(
+    (_event: MouseEvent, node: Node) => {
+      setNodes((current) =>
+        current.map((entry) => ({
+          ...entry,
+          selected: entry.id === node.id,
+        })),
+      );
+      programmaticMoveRef.current = true;
+      void fitView({ nodes: [node], padding: 0.4, duration: 200 }).then(() => {
+        programmaticMoveRef.current = false;
+        updateMinimapNeeded();
+      });
+    },
+    [fitView, updateMinimapNeeded],
+  );
+
   return (
-    <div className="sc-canvas-root" data-testid="architecture-canvas">
+    <div
+      ref={canvasRootRef}
+      className="sc-canvas-root"
+      data-testid="architecture-canvas"
+    >
       <div className="sc-flow-legend" aria-label="Flow delivery legend">
         <span className="sc-legend-item sc-legend-sync">sync — solid, call &amp; wait</span>
         <span className="sc-legend-item sc-legend-async">async — dashed, message / event</span>
@@ -162,6 +299,7 @@ function SystemCanvasInner({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onMoveEnd={onMoveEnd}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onlyRenderVisibleElements={false}
@@ -171,12 +309,22 @@ function SystemCanvasInner({
         <NetworkSwimlanesOverlay graph={document.graph} />
         <Background gap={16} color="#334155" />
         <Controls />
-        <MiniMap
-          bgColor="#0f172a"
-          nodeColor="#94a3b8"
-          maskColor="rgb(2 6 23 / 70%)"
-          maskStrokeColor="#475569"
-        />
+        {minimapNeeded ? (
+          <MiniMap
+            ariaLabel="Architecture overview"
+            pannable
+            zoomable
+            bgColor="#0f172a"
+            nodeColor={minimapNodeColor}
+            nodeStrokeColor={minimapNodeStrokeColor}
+            nodeStrokeWidth={2}
+            maskColor="rgb(2 6 23 / 70%)"
+            maskStrokeColor="#475569"
+            maskStrokeWidth={2}
+            style={{ width: 140, height: 90 }}
+            onNodeClick={onMinimapNodeClick}
+          />
+        ) : null}
       </ReactFlow>
     </div>
   );

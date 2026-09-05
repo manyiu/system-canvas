@@ -16,6 +16,16 @@
   --xy-controls-box-shadow: none;
 }
 
+/* Compact overview navigator — only mounted when the graph overflows the viewport. */
+.sc-canvas-root .react-flow__minimap {
+  width: 140px;
+  height: 90px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: none;
+}
+
 .sc-flow-legend {
   position: absolute;
   top: 8px;
