@@ -156,6 +156,7 @@ function SystemCanvasInner({
         <span className="sc-legend-item sc-legend-async">async — dashed, message / event</span>
       </div>
       <ReactFlow
+        colorMode="dark"
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -170,7 +171,12 @@ function SystemCanvasInner({
         <NetworkSwimlanesOverlay graph={document.graph} />
         <Background gap={16} color="#334155" />
         <Controls />
-        <MiniMap nodeColor="#475569" maskColor="rgb(15 23 42 / 70%)" />
+        <MiniMap
+          bgColor="#0f172a"
+          nodeColor="#94a3b8"
+          maskColor="rgb(2 6 23 / 70%)"
+          maskStrokeColor="#475569"
+        />
       </ReactFlow>
     </div>
   );

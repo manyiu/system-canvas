@@ -6,6 +6,16 @@
   position: relative;
 }
 
+/* Align xyflow Controls with slate canvas chrome (colorMode="dark"). */
+.sc-canvas-root .react-flow {
+  --xy-controls-button-background-color: #1e293b;
+  --xy-controls-button-background-color-hover: #334155;
+  --xy-controls-button-color: #e2e8f0;
+  --xy-controls-button-color-hover: #f8fafc;
+  --xy-controls-button-border-color: #475569;
+  --xy-controls-box-shadow: none;
+}
+
 .sc-flow-legend {
   position: absolute;
   top: 8px;
