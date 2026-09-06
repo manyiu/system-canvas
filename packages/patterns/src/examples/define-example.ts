@@ -159,14 +159,7 @@ export function defineExample(def: ExampleDefinition): PatternFactory {
         positions,
       );
 
-      const graph = createGraph(
-        def.id,
-        def.name,
-        "v1",
-        nodes,
-        channels,
-        def.networks ?? [],
-      );
+      const graph = createGraph(def.id, def.name, "v1", nodes, channels, def.networks ?? []);
 
       const scenarios = def.scenarios.map((sc) =>
         createScenario(
@@ -180,10 +173,7 @@ export function defineExample(def: ExampleDefinition): PatternFactory {
                       kind: "emit" as const,
                       nodeId: step.fromNode,
                       channelId: step.channelId,
-                      payload: createPayload(
-                        step.payloadType ?? "Event",
-                        step.payloadData ?? {},
-                      ),
+                      payload: createPayload(step.payloadType ?? "Event", step.payloadData ?? {}),
                     },
                   ]
                 : [];

@@ -21,12 +21,7 @@ export type PayloadKind =
   | "message"
   | "record";
 
-const SYNC_RELATIONSHIPS = new Set<RelationshipKind>([
-  "command",
-  "query",
-  "request",
-  "response",
-]);
+const SYNC_RELATIONSHIPS = new Set<RelationshipKind>(["command", "query", "request", "response"]);
 
 const ASYNC_RELATIONSHIPS = new Set<RelationshipKind>([
   "event",
@@ -38,29 +33,21 @@ const ASYNC_RELATIONSHIPS = new Set<RelationshipKind>([
 ]);
 
 /** Suggested delivery when only relationship is set. */
-export function inferDeliveryFromRelationship(
-  relationship: RelationshipKind,
-): "sync" | "async" {
+export function inferDeliveryFromRelationship(relationship: RelationshipKind): "sync" | "async" {
   if (SYNC_RELATIONSHIPS.has(relationship)) return "sync";
   if (ASYNC_RELATIONSHIPS.has(relationship)) return "async";
   return "async";
 }
 
-export function isSyncRelationship(
-  relationship: RelationshipKind | undefined,
-): boolean {
+export function isSyncRelationship(relationship: RelationshipKind | undefined): boolean {
   return relationship !== undefined && SYNC_RELATIONSHIPS.has(relationship);
 }
 
-export function isAsyncRelationship(
-  relationship: RelationshipKind | undefined,
-): boolean {
+export function isAsyncRelationship(relationship: RelationshipKind | undefined): boolean {
   return relationship !== undefined && ASYNC_RELATIONSHIPS.has(relationship);
 }
 
-export function parseRelationshipKind(
-  value: unknown,
-): RelationshipKind | undefined {
+export function parseRelationshipKind(value: unknown): RelationshipKind | undefined {
   const kinds: RelationshipKind[] = [
     "command",
     "query",
@@ -73,9 +60,7 @@ export function parseRelationshipKind(
     "compensation",
     "poll",
   ];
-  return kinds.includes(value as RelationshipKind)
-    ? (value as RelationshipKind)
-    : undefined;
+  return kinds.includes(value as RelationshipKind) ? (value as RelationshipKind) : undefined;
 }
 
 export function parsePayloadKind(value: unknown): PayloadKind | undefined {
@@ -88,9 +73,7 @@ export function parsePayloadKind(value: unknown): PayloadKind | undefined {
     "message",
     "record",
   ];
-  return kinds.includes(value as PayloadKind)
-    ? (value as PayloadKind)
-    : undefined;
+  return kinds.includes(value as PayloadKind) ? (value as PayloadKind) : undefined;
 }
 
 const LABEL_SEPARATOR = " · ";

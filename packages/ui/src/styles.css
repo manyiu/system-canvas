@@ -74,7 +74,9 @@
   color: #f1f5f9;
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-size: 12px;
-  transition: box-shadow 0.2s, border-color 0.2s;
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s;
 }
 
 .sc-node-header {
@@ -114,7 +116,10 @@
   padding: 2px 6px;
   font-size: 10px;
   color: #cbd5e1;
-  transition: border-color 0.2s, box-shadow 0.2s, color 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    color 0.2s;
 }
 
 .sc-port-chip-active {

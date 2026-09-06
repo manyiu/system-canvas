@@ -1,10 +1,10 @@
 import type { SystemDocument } from "../ast/document.js";
-import type { SystemGraph, SystemNode } from "../ast/system.js";
 import {
   inferDeliveryFromRelationship,
   isAsyncRelationship,
   isSyncRelationship,
 } from "../ast/flow.js";
+import type { SystemGraph, SystemNode } from "../ast/system.js";
 
 export type LintSeverity = "error" | "warning" | "info";
 
@@ -31,11 +31,7 @@ function networkOf(graph: SystemGraph, nodeId: string): string | undefined {
   return nodeById(graph, nodeId)?.networkId;
 }
 
-function crossesNetwork(
-  graph: SystemGraph,
-  sourceId: string,
-  targetId: string,
-): boolean {
+function crossesNetwork(graph: SystemGraph, sourceId: string, targetId: string): boolean {
   const srcNet = networkOf(graph, sourceId);
   const tgtNet = networkOf(graph, targetId);
   if (!srcNet || !tgtNet) return false;
@@ -87,9 +83,7 @@ export function lintSyncToQueue(document: SystemDocument): LintIssue[] {
 }
 
 /** Delivery contradicts relationship semantics. */
-export function lintDeliveryRelationshipMismatch(
-  document: SystemDocument,
-): LintIssue[] {
+export function lintDeliveryRelationshipMismatch(document: SystemDocument): LintIssue[] {
   const { graph } = document;
   const issues: LintIssue[] = [];
 
@@ -123,8 +117,7 @@ export function lintDeliveryRelationshipMismatch(
 
 function isRelationshipReviewGraph(graph: SystemGraph): boolean {
   return (
-    graph.id === "outbox" ||
-    graph.channels.some((channel) => channel.relationship !== undefined)
+    graph.id === "outbox" || graph.channels.some((channel) => channel.relationship !== undefined)
   );
 }
 
@@ -173,8 +166,7 @@ export function lintSharedDatabaseWrite(document: SystemDocument): LintIssue[] {
       severity: "warning",
       targetId: dbId,
       message: `Database "${dbId}" receives sync writes from: ${writers.join(", ")}.`,
-      suggestion:
-        "Consider database-per-service, outbox, or explicit shared-data decision.",
+      suggestion: "Consider database-per-service, outbox, or explicit shared-data decision.",
     });
   }
 
@@ -187,14 +179,10 @@ export function lintOutboxPatternShape(document: SystemDocument): LintIssue[] {
 
   const issues: LintIssue[] = [];
   const syncToDb = document.graph.channels.some(
-    (c) =>
-      c.delivery === "sync" &&
-      nodeById(document.graph, c.target)?.kind === "database",
+    (c) => c.delivery === "sync" && nodeById(document.graph, c.target)?.kind === "database",
   );
   const asyncToQueue = document.graph.channels.some(
-    (c) =>
-      c.delivery === "async" &&
-      nodeById(document.graph, c.target)?.kind === "queue",
+    (c) => c.delivery === "async" && nodeById(document.graph, c.target)?.kind === "queue",
   );
 
   if (!syncToDb) {
@@ -219,9 +207,7 @@ export function lintOutboxPatternShape(document: SystemDocument): LintIssue[] {
 }
 
 /** Suggest delivery when only relationship is set. */
-export function lintUnderspecifiedDelivery(
-  document: SystemDocument,
-): LintIssue[] {
+export function lintUnderspecifiedDelivery(document: SystemDocument): LintIssue[] {
   const issues: LintIssue[] = [];
 
   for (const channel of document.graph.channels) {

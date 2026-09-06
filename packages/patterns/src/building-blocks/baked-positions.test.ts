@@ -1,19 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import {
-  columnPositions,
-  hubPositions,
-  sideBranchPositions,
-} from "./baked-positions.ts";
+import { columnPositions, hubPositions, sideBranchPositions } from "./baked-positions.ts";
 
 describe("columnPositions", () => {
   it("places ranks left to right and centers shorter columns", () => {
-    const pos = columnPositions([
-      ["Client"],
-      ["Gateway"],
-      ["ServiceA", "ServiceB"],
-      ["DB"],
-    ]);
+    const pos = columnPositions([["Client"], ["Gateway"], ["ServiceA", "ServiceB"], ["DB"]]);
     assert.equal(pos.Client!.x < pos.Gateway!.x, true);
     assert.equal(pos.Gateway!.x < pos.ServiceA!.x, true);
     assert.equal(pos.ServiceA!.x, pos.ServiceB!.x);

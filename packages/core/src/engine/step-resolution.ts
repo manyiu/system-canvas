@@ -1,11 +1,8 @@
-import type { StepInteraction } from "../ast/interaction.js";
 import type { ExecutionStep } from "../ast/execution.js";
+import type { StepInteraction } from "../ast/interaction.js";
 import type { SystemGraph } from "../ast/system.js";
 
-export function deriveInteractions(
-  graph: SystemGraph,
-  step: ExecutionStep,
-): StepInteraction[] {
+export function deriveInteractions(graph: SystemGraph, step: ExecutionStep): StepInteraction[] {
   if (step.interactions.length > 0) {
     return step.interactions;
   }
@@ -44,16 +41,10 @@ export function activeChannelIdsFromStep(
 
   for (const interaction of interactions) {
     const src =
-      typeof interaction.source === "string"
-        ? interaction.source
-        : interaction.source.nodeId;
+      typeof interaction.source === "string" ? interaction.source : interaction.source.nodeId;
     const tgt =
-      typeof interaction.target === "string"
-        ? interaction.target
-        : interaction.target.nodeId;
-    const match = graph.channels.find(
-      (c) => c.source === src && c.target === tgt,
-    );
+      typeof interaction.target === "string" ? interaction.target : interaction.target.nodeId;
+    const match = graph.channels.find((c) => c.source === src && c.target === tgt);
     if (match) ids.add(match.id);
   }
 

@@ -1,8 +1,5 @@
 import { useRef } from "react";
-import {
-  exampleDisplayName,
-  groupExamplesByDifficulty,
-} from "../lib/example-groups.js";
+import { exampleDisplayName, groupExamplesByDifficulty } from "../lib/example-groups.js";
 import { useDocumentStore } from "../store/document-store.js";
 
 export function ExamplesMenu() {
@@ -28,9 +25,7 @@ export function ExamplesMenu() {
   const reloadExample = () => {
     if (!loadedExampleId) return;
     const name = exampleDisplayName(loadedExampleId);
-    const ok = window.confirm(
-      `Reload "${name}"? Any edits to this example will be lost.`,
-    );
+    const ok = window.confirm(`Reload "${name}"? Any edits to this example will be lost.`);
     if (ok) {
       loadExample(loadedExampleId);
       closeMenu();

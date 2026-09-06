@@ -5,11 +5,11 @@ import type {
   InvokeOutcome,
   MutateStatePrimitive,
   NodePort,
-  Payload,
   PatternEventHandler,
   PatternExpandContext,
   PatternExpr,
   PatternStmt,
+  Payload,
   Primitive,
   Scenario,
   StepAnimation,
@@ -19,11 +19,7 @@ import type {
   SystemNode,
   VisualDirective,
 } from "@system-canvas/core";
-import {
-  expandPattern,
-  parsePayloadKind,
-  parseRelationshipKind,
-} from "@system-canvas/core";
+import { expandPattern, parsePayloadKind, parseRelationshipKind } from "@system-canvas/core";
 
 interface ParsedDocument {
   type: "document";
@@ -169,10 +165,6 @@ function toNodeRef(ref: NodeRefParsed): StepInteraction["source"] {
   return { nodeId: ref.node, portId: ref.port };
 }
 
-function channelKey(source: string, target: string): string {
-  return `${source}->${target}`;
-}
-
 function parseDelivery(value: unknown): Channel["delivery"] {
   if (value === "sync" || value === "async") return value;
   return undefined;
@@ -272,9 +264,7 @@ function asOutcomes(value: unknown): InvokeOutcome[] {
   });
 }
 
-function buildApplyContext(
-  bindings: Record<string, unknown>,
-): PatternExpandContext {
+function buildApplyContext(bindings: Record<string, unknown>): PatternExpandContext {
   const source = asString(bindings.source, "source");
   const target = asString(bindings.target, "target");
   const channelId = asString(bindings.channel, "channel");
@@ -309,10 +299,7 @@ function buildApplyContext(
     sourceNodeId: source,
     bindings: named,
     channelId,
-    dlqChannelId:
-      typeof bindings.dlqChannel === "string"
-        ? bindings.dlqChannel
-        : undefined,
+    dlqChannelId: typeof bindings.dlqChannel === "string" ? bindings.dlqChannel : undefined,
     event,
     outcomes,
     params: Object.keys(params).length > 0 ? params : undefined,
@@ -322,11 +309,7 @@ function buildApplyContext(
 function buildStepFromParsed(
   step: ParsedStep,
   index: number,
-  ensureChannel: (
-    sourceRef: NodeRefParsed,
-    targetRef: NodeRefParsed,
-    label?: string,
-  ) => string,
+  ensureChannel: (sourceRef: NodeRefParsed, targetRef: NodeRefParsed, label?: string) => string,
 ): ExecutionStep {
   const interactions: StepInteraction[] = [];
   const animations: StepAnimation[] = [];
@@ -433,8 +416,7 @@ export function buildSystemDocument(parsed: ParsedDocument): SystemDocument {
       source,
       target,
       label: typeof ch.attrs.label === "string" ? ch.attrs.label : undefined,
-      payloadType:
-        typeof ch.attrs.payload === "string" ? ch.attrs.payload : undefined,
+      payloadType: typeof ch.attrs.payload === "string" ? ch.attrs.payload : undefined,
       delivery: parseDelivery(ch.attrs.delivery),
       relationship: parseRelationshipKind(ch.attrs.relationship),
       payloadKind: parsePayloadKind(ch.attrs.payloadKind),
@@ -460,17 +442,11 @@ export function buildSystemDocument(parsed: ParsedDocument): SystemDocument {
 
   const nodes: SystemNode[] = parsed.nodes.map((n) => {
     const configEntries = Object.entries(n.props).filter(
-      ([k]) =>
-        k !== "icon" &&
-        k !== "label" &&
-        k !== "x" &&
-        k !== "y" &&
-        k !== "network",
+      ([k]) => k !== "icon" && k !== "label" && k !== "x" && k !== "y" && k !== "network",
     );
     const x = typeof n.props.x === "number" ? n.props.x : undefined;
     const y = typeof n.props.y === "number" ? n.props.y : undefined;
-    const networkId =
-      typeof n.props.network === "string" ? n.props.network : undefined;
+    const networkId = typeof n.props.network === "string" ? n.props.network : undefined;
 
     return {
       id: n.id,
@@ -525,9 +501,7 @@ export function buildSystemDocument(parsed: ParsedDocument): SystemDocument {
       if (item.type === "apply") {
         const pattern = patternById.get(item.pattern);
         if (!pattern) {
-          throw new Error(
-            `apply references unknown pattern "${item.pattern}"`,
-          );
+          throw new Error(`apply references unknown pattern "${item.pattern}"`);
         }
         const ctx = buildApplyContext(item.bindings);
         const expanded = expandPattern(pattern, {
@@ -542,9 +516,7 @@ export function buildSystemDocument(parsed: ParsedDocument): SystemDocument {
           });
         }
       } else {
-        steps.push(
-          buildStepFromParsed(item, steps.length, ensureChannel),
-        );
+        steps.push(buildStepFromParsed(item, steps.length, ensureChannel));
       }
     }
 

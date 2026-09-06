@@ -1,17 +1,9 @@
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  getBezierPath,
-  type EdgeProps,
-} from "@xyflow/react";
 import type { FlowDelivery, RelationshipKind } from "@system-canvas/core";
-import {
-  getChannelEdgeStyle,
-  resolveChannelEdgeLabel,
-} from "../visuals/flow-styles.js";
+import { BaseEdge, EdgeLabelRenderer, type EdgeProps, getBezierPath } from "@xyflow/react";
+import { getChannelEdgeStyle, resolveChannelEdgeLabel } from "../visuals/flow-styles.js";
 import { placeChannelEdgeLabel } from "./edge-label-placement.js";
-import type { PacketFlight } from "./packet-flight.js";
 import { PacketMarker } from "./PacketMarker.js";
+import type { PacketFlight } from "./packet-flight.js";
 
 export interface ChannelEdgeData {
   highlighted?: boolean;
@@ -53,8 +45,7 @@ export function ChannelEdge({
   const packets = edgeData.packets ?? [];
 
   // Match to-flow: live interaction label, else channel label (never static payloadType).
-  const canonicalLabel =
-    edgeData.interactionLabel ?? edgeData.channelLabel ?? undefined;
+  const canonicalLabel = edgeData.interactionLabel ?? edgeData.channelLabel ?? undefined;
   const displayLabel = resolveChannelEdgeLabel({
     highlighted,
     selected,
@@ -63,9 +54,7 @@ export function ChannelEdge({
     relationship: edgeData.relationship,
   });
   // Fall back to React Flow edge.label when data parts are missing.
-  const text =
-    displayLabel ??
-    (typeof label === "string" ? label : undefined);
+  const text = displayLabel ?? (typeof label === "string" ? label : undefined);
 
   const { x: labelX, y: labelY } = placeChannelEdgeLabel(
     sourceX,

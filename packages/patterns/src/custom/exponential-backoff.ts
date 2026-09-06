@@ -1,19 +1,11 @@
-import type { SystemDocument } from "@system-canvas/core";
+import type { CustomPatternDefinition, SystemDocument } from "@system-canvas/core";
 import { expandPattern } from "@system-canvas/core";
-import type { PatternFactory } from "../types.js";
-import {
-  createDocument,
-  createGraph,
-  createScenario,
-  node,
-} from "../helpers.js";
 import { applyPositions, columnPositions } from "../building-blocks/baked-positions.js";
-import type { CustomPatternDefinition } from "@system-canvas/core";
+import { createDocument, createGraph, createScenario, node } from "../helpers.js";
+import type { PatternFactory } from "../types.js";
 
 /** Canonical ExponentialBackoff pattern definition (matches DSL grammar). */
-export function createExponentialBackoffPattern(
-  maxRetries = 3,
-): CustomPatternDefinition {
+export function createExponentialBackoffPattern(maxRetries = 3): CustomPatternDefinition {
   return {
     id: "ExponentialBackoff",
     name: "ExponentialBackoff",
@@ -69,12 +61,7 @@ function buildBackoffDocument(
   outcomes: Array<"ok" | "fail">,
 ): SystemDocument {
   const pattern = createExponentialBackoffPattern(3);
-  const positions = columnPositions([
-    ["Gateway"],
-    ["PaymentService"],
-    ["DLQ"],
-    ["Ops"],
-  ]);
+  const positions = columnPositions([["Gateway"], ["PaymentService"], ["DLQ"], ["Ops"]]);
 
   const nodes = applyPositions(
     [
@@ -118,13 +105,7 @@ function buildBackoffDocument(
     },
   ];
 
-  const graph = createGraph(
-    "ExponentialBackoffDemo",
-    "Exponential Backoff",
-    "v1",
-    nodes,
-    channels,
-  );
+  const graph = createGraph("ExponentialBackoffDemo", "Exponential Backoff", "v1", nodes, channels);
 
   const steps = expandPattern(pattern, {
     sourceNodeId: "Gateway",
@@ -136,9 +117,11 @@ function buildBackoffDocument(
     patternTag: pattern.id,
   });
 
-  return createDocument(graph, [
-    createScenario(scenarioName, graph.id, steps, scenarioId),
-  ], [pattern]);
+  return createDocument(
+    graph,
+    [createScenario(scenarioName, graph.id, steps, scenarioId)],
+    [pattern],
+  );
 }
 
 export const exponentialBackoffExample: PatternFactory = {
@@ -155,11 +138,7 @@ export const exponentialBackoffExample: PatternFactory = {
     defaultScenarioId: "retry-then-succeed",
   },
   create() {
-    return buildBackoffDocument(
-      "Retry then succeed",
-      "retry-then-succeed",
-      ["fail", "fail", "ok"],
-    );
+    return buildBackoffDocument("Retry then succeed", "retry-then-succeed", ["fail", "fail", "ok"]);
   },
 };
 
@@ -177,10 +156,6 @@ export const exponentialBackoffDlqExample: PatternFactory = {
     defaultScenarioId: "exhaust-to-dlq",
   },
   create() {
-    return buildBackoffDocument(
-      "Exhaust to DLQ",
-      "exhaust-to-dlq",
-      ["fail", "fail", "fail"],
-    );
+    return buildBackoffDocument("Exhaust to DLQ", "exhaust-to-dlq", ["fail", "fail", "fail"]);
   },
 };

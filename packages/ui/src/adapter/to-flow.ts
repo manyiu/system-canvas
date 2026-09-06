@@ -5,12 +5,9 @@ import type {
   SystemGraph,
 } from "@system-canvas/core";
 import type { Edge, Node } from "@xyflow/react";
-import { applyVisualDirectives } from "../visuals/apply-directives.js";
-import {
-  formatChannelLabel,
-  shouldAnimateChannel,
-} from "../visuals/flow-styles.js";
 import { buildPacketFlights } from "../edges/packet-flight.js";
+import { applyVisualDirectives } from "../visuals/apply-directives.js";
+import { formatChannelLabel, shouldAnimateChannel } from "../visuals/flow-styles.js";
 import { graphNeedsLayout, layoutGraph } from "./layout.js";
 import { resolveChannelHandles } from "./resolve-handles.js";
 
@@ -27,10 +24,7 @@ export interface FlowGraph {
   graph: SystemGraph;
 }
 
-export function toFlowGraph(
-  document: SystemDocument,
-  options: FlowGraphOptions = {},
-): FlowGraph {
+export function toFlowGraph(document: SystemDocument, options: FlowGraphOptions = {}): FlowGraph {
   let graph = document.graph;
   if (options.autoLayout !== false && graphNeedsLayout(graph)) {
     graph = layoutGraph(graph);
@@ -42,16 +36,10 @@ export function toFlowGraph(
   const interactionLabels = new Map(
     (options.executionResult?.resolvedInteractions ?? []).flatMap((interaction) => {
       const src =
-        typeof interaction.source === "string"
-          ? interaction.source
-          : interaction.source.nodeId;
+        typeof interaction.source === "string" ? interaction.source : interaction.source.nodeId;
       const tgt =
-        typeof interaction.target === "string"
-          ? interaction.target
-          : interaction.target.nodeId;
-      const channel = graph.channels.find(
-        (c) => c.source === src && c.target === tgt,
-      );
+        typeof interaction.target === "string" ? interaction.target : interaction.target.nodeId;
+      const channel = graph.channels.find((c) => c.source === src && c.target === tgt);
       if (!channel || !interaction.payload) return [];
       return [[channel.id, interaction.payload.type] as const];
     }),

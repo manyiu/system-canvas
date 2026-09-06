@@ -10,15 +10,19 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "dev:app": "turbo run dev --filter=@system-canvas/app...",
+    "format": "biome check --write .",
+    "lint": "biome lint .",
+    "check": "biome check .",
     "test:e2e": "playwright install chromium && playwright test",
     "test:e2e:ui": "playwright install chromium && playwright test --ui",
     "test:unit": "turbo run build --filter=@system-canvas/core --filter=@system-canvas/dsl --filter=@system-canvas/patterns && node --experimental-strip-types --test packages/core/src/**/*.test.ts packages/dsl/src/**/*.test.ts packages/ui/src/**/*.test.ts packages/patterns/src/**/*.test.ts",
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.3.11",
     "@playwright/test": "1.55.0",
     "@types/node": "26.4.0",
-    "prettier": "3.9.6",
+    "aws-cdk": "^2.1140.0",
     "turbo": "2.10.12",
     "typescript": "7.0.2"
   }

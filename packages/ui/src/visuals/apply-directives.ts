@@ -1,7 +1,7 @@
-import type { SystemGraph } from "@system-canvas/core";
 import type {
   NodeVisualState,
   SignalColor,
+  SystemGraph,
   VisualDirective,
 } from "@system-canvas/core";
 

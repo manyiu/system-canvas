@@ -63,14 +63,11 @@ describe("expandPattern", () => {
     });
 
     const names = steps.map((s) => s.name);
-    assert.deepEqual(names, [
-      "Attempt 1",
-      "Backoff",
-      "Attempt 2",
-      "Backoff",
-      "Attempt 3",
-    ]);
-    assert.equal(steps[0]?.primitives.some((p) => p.kind === "emit"), true);
+    assert.deepEqual(names, ["Attempt 1", "Backoff", "Attempt 2", "Backoff", "Attempt 3"]);
+    assert.equal(
+      steps[0]?.primitives.some((p) => p.kind === "emit"),
+      true,
+    );
     assert.equal(steps[1]?.visuals?.[0]?.kind, "hold");
     assert.equal(
       steps[4]?.visuals?.some((v) => v.color === "green"),

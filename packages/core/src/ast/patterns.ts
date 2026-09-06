@@ -1,9 +1,6 @@
 import type { Primitive } from "./primitives.js";
 
-export type PatternCategory =
-  | "data-consistency"
-  | "resilience"
-  | "traffic-distribution";
+export type PatternCategory = "data-consistency" | "resilience" | "traffic-distribution";
 
 /** @deprecated Use ExampleDifficulty for interview examples */
 export interface PatternMeta {

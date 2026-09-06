@@ -11,3 +11,18 @@ packages/*/src/**/*.d.ts.map
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Secrets and local credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.key
+credentials*.json
+service-account*.json
+.aws/
+
+# CDK
+infra/cdk.out/
+infra/cdk.context.json

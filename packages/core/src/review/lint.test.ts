@@ -7,10 +7,7 @@ import {
   runReviewLint,
 } from "../../dist/index.mjs";
 
-function doc(
-  graphId: string,
-  channels: SystemDocument["graph"]["channels"],
-): SystemDocument {
+function doc(graphId: string, channels: SystemDocument["graph"]["channels"]): SystemDocument {
   return {
     graph: {
       id: graphId,
@@ -36,9 +33,7 @@ describe("lintOutboxPatternShape", () => {
       { id: "ch1", source: "OrderService", target: "DB", delivery: "sync" },
     ]);
     const issues = lintOutboxPatternShape(incomplete);
-    assert.ok(
-      issues.some((issue) => issue.ruleId === "outbox-missing-async-publish"),
-    );
+    assert.ok(issues.some((issue) => issue.ruleId === "outbox-missing-async-publish"));
   });
 });
 

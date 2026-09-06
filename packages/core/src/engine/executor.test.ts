@@ -48,11 +48,7 @@ describe("createExecutor cumulative state", () => {
       name: "Happy",
       graphId: "test",
       initialState: { A: { fromInitial: 1 } },
-      steps: [
-        emptyStep(0, "First", [
-          { kind: "mutate", nodeId: "A", patch: { count: 1 } },
-        ]),
-      ],
+      steps: [emptyStep(0, "First", [{ kind: "mutate", nodeId: "A", patch: { count: 1 } }])],
     };
 
     const result = createExecutor().executeStep(graph, scenario, 0);
@@ -70,9 +66,7 @@ describe("createExecutor cumulative state", () => {
       graphId: "test",
       initialState: {},
       steps: [
-        emptyStep(0, "Step0", [
-          { kind: "mutate", nodeId: "A", patch: { phase: "written" } },
-        ]),
+        emptyStep(0, "Step0", [{ kind: "mutate", nodeId: "A", patch: { phase: "written" } }]),
         emptyStep(1, "Step1", [
           { kind: "mutate", nodeId: "A", patch: { phase: "published", n: 2 } },
           {

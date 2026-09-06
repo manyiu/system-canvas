@@ -1,6 +1,6 @@
 import type { Scenario } from "./execution.js";
-import type { SystemGraph } from "./system.js";
 import type { CustomPatternDefinition } from "./patterns.js";
+import type { SystemGraph } from "./system.js";
 
 export interface SystemDocument {
   graph: SystemGraph;

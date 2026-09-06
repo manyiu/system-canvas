@@ -1,6 +1,5 @@
 import type { ExampleDifficulty, ExampleMeta, SystemDocument } from "@system-canvas/core";
 import { allExamples } from "./examples/index.js";
-import type { PatternFactory } from "./types.js";
 
 const exampleRegistry: Record<string, () => SystemDocument> = Object.fromEntries(
   allExamples.map((p) => [p.id, () => p.create()]),
@@ -18,9 +17,7 @@ export function listExamples(): ExampleMeta[] {
   return allExamples.map((p) => p.meta);
 }
 
-export function listExamplesByDifficulty(
-  difficulty: ExampleDifficulty,
-): ExampleMeta[] {
+export function listExamplesByDifficulty(difficulty: ExampleDifficulty): ExampleMeta[] {
   return listExamples().filter((p) => p.difficulty === difficulty);
 }
 
@@ -31,9 +28,7 @@ export const getPattern = getExample;
 export const listPatterns = listExamples;
 
 /** @deprecated Use listExamplesByDifficulty */
-export function listPatternsByCategory(
-  difficulty: ExampleDifficulty,
-): ExampleMeta[] {
+export function listPatternsByCategory(difficulty: ExampleDifficulty): ExampleMeta[] {
   return listExamplesByDifficulty(difficulty);
 }
 

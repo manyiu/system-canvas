@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
 import { EdgeLabelRenderer } from "@xyflow/react";
+import { useEffect, useRef, useState } from "react";
 import type { PacketFlight } from "./packet-flight.js";
 
 interface PacketMarkerProps {
@@ -7,10 +7,7 @@ interface PacketMarkerProps {
   flight: PacketFlight;
 }
 
-function pointAlongPath(
-  pathD: string,
-  progress: number,
-): { x: number; y: number } | null {
+function pointAlongPath(pathD: string, progress: number): { x: number; y: number } | null {
   if (typeof document === "undefined") return null;
   const el = document.createElementNS("http://www.w3.org/2000/svg", "path");
   el.setAttribute("d", pathD);

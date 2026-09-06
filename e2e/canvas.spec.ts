@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 
 const BITLY_NODES = [
   "Client",
@@ -10,7 +10,13 @@ const BITLY_NODES = [
   "Kafka",
   "AnalyticsService",
 ];
-const RATE_LIMITER_NODES = ["Client", "APIGateway", "RateLimiterService", "RedisCounter", "BackendService"];
+const RATE_LIMITER_NODES = [
+  "Client",
+  "APIGateway",
+  "RateLimiterService",
+  "RedisCounter",
+  "BackendService",
+];
 
 async function expectNodeInCanvas(canvas: Locator, nodeId: string) {
   const node = canvas.locator(`.react-flow__node[data-id="${nodeId}"]`);
@@ -38,9 +44,7 @@ async function waitForCanvasReady(page: Page, expectedEdges?: number) {
 
 async function waitForClipboardText(page: Page, substring: string) {
   await expect
-    .poll(async () =>
-      page.evaluate(async () => navigator.clipboard.readText()),
-    )
+    .poll(async () => page.evaluate(async () => navigator.clipboard.readText()))
     .toContain(substring);
 }
 
@@ -100,18 +104,12 @@ test.describe("Architecture Canvas", () => {
 
       expect(nodeBox.x).toBeGreaterThanOrEqual(canvasBox.x - 2);
       expect(nodeBox.y).toBeGreaterThanOrEqual(canvasBox.y - 2);
-      expect(nodeBox.x + nodeBox.width).toBeLessThanOrEqual(
-        canvasBox.x + canvasBox.width + 2,
-      );
-      expect(nodeBox.y + nodeBox.height).toBeLessThanOrEqual(
-        canvasBox.y + canvasBox.height + 2,
-      );
+      expect(nodeBox.x + nodeBox.width).toBeLessThanOrEqual(canvasBox.x + canvasBox.width + 2);
+      expect(nodeBox.y + nodeBox.height).toBeLessThanOrEqual(canvasBox.y + canvasBox.height + 2);
     }
   });
 
-  test("hides MiniMap when the graph fits and shows it after zoom-in", async ({
-    page,
-  }) => {
+  test("hides MiniMap when the graph fits and shows it after zoom-in", async ({ page }) => {
     const canvas = page.getByTestId("architecture-canvas");
     const minimap = canvas.locator(".react-flow__minimap");
 
@@ -164,15 +162,11 @@ test.describe("Architecture Canvas", () => {
     for (const nodeId of RATE_LIMITER_NODES) {
       await expectNodeInCanvas(canvas, nodeId);
     }
-    await expect(canvas.locator('.react-flow__node[data-id="URLService"]')).toHaveCount(
-      0,
-    );
+    await expect(canvas.locator('.react-flow__node[data-id="URLService"]')).toHaveCount(0);
   });
 
   test("examples menu shows current example and difficulty groups", async ({ page }) => {
-    await expect(page.getByTestId("examples-menu-trigger")).toContainText(
-      "Bitly",
-    );
+    await expect(page.getByTestId("examples-menu-trigger")).toContainText("Bitly");
     await page.getByTestId("examples-menu-trigger").click();
     await expect(page.getByTestId("example-item-bitly")).toHaveClass(/active/);
     await expect(page.getByText("Easy")).toBeVisible();
@@ -237,9 +231,7 @@ test.describe("Architecture Canvas", () => {
 
     const boxes = await Promise.all(
       RATE_LIMITER_NODES.map(async (nodeId) => {
-        const box = await canvas
-          .locator(`.react-flow__node[data-id="${nodeId}"]`)
-          .boundingBox();
+        const box = await canvas.locator(`.react-flow__node[data-id="${nodeId}"]`).boundingBox();
         expect(box).not.toBeNull();
         return box!;
       }),
@@ -280,10 +272,7 @@ test.describe("Architecture Canvas", () => {
     await expectNodeInCanvas(canvas, "URLService");
   });
 
-  test("moving nodes does not corrupt channel labels in DSL", async ({
-    page,
-    context,
-  }) => {
+  test("moving nodes does not corrupt channel labels in DSL", async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
 
     const canvas = page.getByTestId("architecture-canvas");
@@ -362,16 +351,11 @@ test.describe("Architecture Canvas", () => {
     );
 
     await timeline.getByTestId("playback-play-pause").click();
-    await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute(
-      "aria-label",
-      "Play",
-    );
+    await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute("aria-label", "Play");
 
     const label = await timeline.getByTestId("playback-step-label").textContent();
     await page.waitForTimeout(1_200);
-    await expect(timeline.getByTestId("playback-step-label")).toHaveText(
-      label ?? "",
-    );
+    await expect(timeline.getByTestId("playback-step-label")).toHaveText(label ?? "");
   });
 
   test("scrubber and step buttons seek and pause playback", async ({ page }) => {
@@ -382,10 +366,7 @@ test.describe("Architecture Canvas", () => {
 
     await timeline.getByRole("button", { name: /Client Request/ }).click();
     await expect(timeline.getByTestId("playback-step-label")).toHaveText("1/3");
-    await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute(
-      "aria-label",
-      "Play",
-    );
+    await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute("aria-label", "Play");
   });
 
   test("scenario switch resets playback to step 1", async ({ page }) => {
@@ -395,18 +376,14 @@ test.describe("Architecture Canvas", () => {
 
     await timeline.getByTestId("scenario-chip-bitly-cache-hit").click();
     await expect(timeline.getByTestId("playback-step-label")).toHaveText(/1\//);
-    await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute(
-      "aria-label",
-      "Play",
+    await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute("aria-label", "Play");
+    await expect(timeline.getByTestId("scenario-chip-bitly-cache-hit")).toHaveAttribute(
+      "aria-selected",
+      "true",
     );
-    await expect(
-      timeline.getByTestId("scenario-chip-bitly-cache-hit"),
-    ).toHaveAttribute("aria-selected", "true");
   });
 
-  test("Client Request shows payload packet on URLService channel", async ({
-    page,
-  }) => {
+  test("Client Request shows payload packet on URLService channel", async ({ page }) => {
     const canvas = page.getByTestId("architecture-canvas");
     await page.getByRole("button", { name: /Client Request/ }).click();
 
@@ -414,9 +391,7 @@ test.describe("Architecture Canvas", () => {
     await expect(packet).toBeVisible();
     await expect(packet).toHaveAttribute("data-channel-id", "ch3");
     await expect(packet).toHaveAttribute("data-payload-type", "ShortenURL");
-    await expect(
-      canvas.locator('.react-flow__edge[data-id="ch3"].sc-edge-sync'),
-    ).toHaveCount(1);
+    await expect(canvas.locator('.react-flow__edge[data-id="ch3"].sc-edge-sync')).toHaveCount(1);
   });
 
   test("Persist to DB shows payload packet", async ({ page }) => {
@@ -434,19 +409,10 @@ test.describe("Architecture Canvas", () => {
     const timeline = page.getByTestId("step-timeline");
 
     await timeline.getByTestId("playback-step-forward").click();
-    await expect(canvas.getByTestId("payload-packet")).toHaveAttribute(
-      "data-channel-id",
-      "ch-db",
-    );
+    await expect(canvas.getByTestId("payload-packet")).toHaveAttribute("data-channel-id", "ch-db");
 
     await timeline.getByRole("button", { name: /Client Request/ }).click();
-    await expect(canvas.getByTestId("payload-packet")).toHaveAttribute(
-      "data-channel-id",
-      "ch3",
-    );
-    await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute(
-      "aria-label",
-      "Play",
-    );
+    await expect(canvas.getByTestId("payload-packet")).toHaveAttribute("data-channel-id", "ch3");
+    await expect(timeline.getByTestId("playback-play-pause")).toHaveAttribute("aria-label", "Play");
   });
 });

@@ -1,12 +1,7 @@
 import type { ExampleDifficulty, ExampleMeta } from "@system-canvas/core";
 import { listExamples } from "@system-canvas/patterns";
 
-const DIFFICULTY_ORDER: ExampleDifficulty[] = [
-  "easy",
-  "medium",
-  "hard",
-  "community",
-];
+const DIFFICULTY_ORDER: ExampleDifficulty[] = ["easy", "medium", "hard", "community"];
 
 const DIFFICULTY_LABELS: Record<ExampleDifficulty, string> = {
   easy: "Easy",
@@ -15,9 +10,7 @@ const DIFFICULTY_LABELS: Record<ExampleDifficulty, string> = {
   community: "More Practice",
 };
 
-export function groupExamplesByDifficulty(
-  examples: ExampleMeta[] = listExamples(),
-): {
+export function groupExamplesByDifficulty(examples: ExampleMeta[] = listExamples()): {
   difficulty: ExampleDifficulty;
   label: string;
   examples: ExampleMeta[];

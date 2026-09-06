@@ -1,6 +1,6 @@
-import type { RelationshipKind, PayloadKind } from "./flow.js";
+import type { PayloadKind, RelationshipKind } from "./flow.js";
 
-export type { RelationshipKind, PayloadKind } from "./flow.js";
+export type { PayloadKind, RelationshipKind } from "./flow.js";
 export {
   inferDeliveryFromRelationship,
   isAsyncRelationship,
@@ -9,13 +9,7 @@ export {
   parseRelationshipKind,
 } from "./flow.js";
 
-export type NodeKind =
-  | "service"
-  | "database"
-  | "queue"
-  | "gateway"
-  | "external"
-  | "custom";
+export type NodeKind = "service" | "database" | "queue" | "gateway" | "external" | "custom";
 
 export interface Position {
   x: number;

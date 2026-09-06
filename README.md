@@ -2,6 +2,8 @@
 
 Interactive visualization for distributed system architecture, data flow, and interaction patterns — Outbox, CDC, Saga, Circuit Breaker, CQRS, and more.
 
+**Live demo:** [https://system-canvas.vazue.com](https://system-canvas.vazue.com)
+
 ## Vision
 
 System Canvas helps architects and engineers **see** how distributed patterns work. Define topology and execution scenarios in a declarative DSL or a drag-and-drop React Flow canvas with **bidirectional sync**, then play or scrub through step-by-step visual highlights and payload packets on channels.
@@ -27,7 +29,7 @@ DSL text / Pattern templates / Custom pattern DSL
 | --- | --- |
 | `@system-canvas/core` | AST types, primitives, visual directives, executor + timeline |
 | `@system-canvas/dsl` | Peggy parser + compiler (`parseDsl()`, `serializeDsl()`) |
-| `@system-canvas/patterns` | Hello Interview examples + custom pattern demos (Exponential Backoff) |
+| `@system-canvas/patterns` | Example catalog + custom pattern demos (Exponential Backoff) |
 | `@system-canvas/ui` | React Flow canvas, adapters, visual directive styling |
 | `@system-canvas/app` | Vite demo — split-pane DSL + canvas editor |
 
@@ -41,15 +43,26 @@ DSL text / Pattern templates / Custom pattern DSL
 
 ## Tech Stack
 
-| Layer | Choice | Version |
+| Layer | Choice | Version / notes |
 | --- | --- | --- |
-| Runtime | Node.js LTS | 24.20.0 |
-| Package manager | pnpm | 12.2.1 |
-| Monorepo | Turborepo | 2.10.12 |
-| Language | TypeScript | 7.0.2 |
-| DSL parser | Peggy | 5.1.0 |
-| Bundler | tsdown | 0.22.14 |
-| Canvas (Step 2) | @xyflow/react | 12.11.6 |
+| Runtime | Node.js | `>=24.20.0` |
+| Package manager | pnpm | `12.2.1` |
+| Monorepo | Turborepo | `2.10.12` |
+| Language | TypeScript | `7.0.2` (strict) |
+| UI | React | `19.x` |
+| App bundler | Vite | `8.x` |
+| State | Zustand | `5.x` |
+| Editor | Monaco Editor | via `@monaco-editor/react` |
+| Canvas | `@xyflow/react` + dagre | `12.x` |
+| DSL parser | Peggy | `5.1.0` |
+| Library bundler | tsdown | `0.22.14` |
+| Format / lint | Biome | monorepo-wide |
+| Unit tests | Node.js test runner | — |
+| E2E | Playwright | `1.55.0` |
+| Hosting | Amazon S3 + CloudFront | private origin, OAC, HTTPS |
+| DNS / TLS | Route 53 + ACM | `system-canvas.vazue.com` |
+| IaC | AWS CDK (TypeScript) | see [`infra/`](infra/) |
+| CI / CD | GitHub Actions + OIDC | trunk-based deploy from `main` |
 
 ## Quick Start
 
@@ -57,13 +70,19 @@ DSL text / Pattern templates / Custom pattern DSL
 # Install dependencies
 pnpm install
 
+# Format + lint (Biome)
+pnpm check
+
 # Build all packages
 pnpm build
 
 # Run the demo app (DSL + canvas split pane)
 pnpm dev:app
 
-# Run Playwright e2e tests (starts dev server automatically)
+# Unit tests
+pnpm test:unit
+
+# Playwright e2e (starts the dev server automatically)
 pnpm test:e2e
 ```
 
@@ -97,21 +116,12 @@ console.log(doc.scenarios[0].steps[0].primitives); // compiled emit/mutate primi
 import { getExample, listExamples } from "@system-canvas/patterns";
 
 const bitly = getExample("bitly");
-const all = listExamples(); // Hello Interview + custom pattern demos
+const all = listExamples();
 ```
 
-## Hello Interview Examples
+## Example Catalog
 
-Examples are grouped by difficulty in the **Examples** menu:
-
-| Difficulty | Count | Sample problems |
-| --- | --- | --- |
-| Easy | 4 | Bitly, Dropbox, Yelp, Local Delivery |
-| Medium | 16 | Ticketmaster, FB News Feed, WhatsApp, Rate Limiter, YouTube, Notification System |
-| Hard | 11 | Uber, Web Crawler, Payment System, ChatGPT |
-| More Practice | 6 | Game Leaderboard, GitHub Actions, Exponential Backoff |
-
-Each example combines multiple services, caches, queues, and failure scenarios with step-by-step playback.
+Examples are grouped by difficulty in the **Examples** menu (easy / medium / hard / more practice), covering common system-design topologies with step-by-step playback.
 
 ## DSL Cheat Sheet
 
@@ -186,19 +196,14 @@ scenario "Retry then succeed" {
 | `apply Pattern { … }` | Expand a pattern into linear steps (scripted outcomes) |
 | `[pattern: id]` | Optional tag on a hand-written step (not a definition) |
 
-## Example Catalog
+## Deploy
 
-See the **Examples** menu in the app for the full Hello Interview catalog (35 composite system design problems).
+Production hosting is defined in [`infra/`](infra/) (AWS CDK). Continuous deploy uses GitHub Actions with OIDC on `main`. See [`infra/README.md`](infra/README.md) for operator bootstrap.
 
-## Roadmap
+## Contributing
 
-| Step | Scope |
-| --- | --- |
-| **Step 1** | Monorepo, AST, DSL parser, pattern library |
-| **Step 2** | React Flow UI, Vite demo, bidirectional DSL ↔ canvas sync |
-| **Step 3** | Execution engine + timeline playback + payload animation on channels |
-| **Step 4** | Custom pattern behavioral DSL (`pattern { onEvent ... }`, compile-time expand) |
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). Security reports: [`SECURITY.md`](SECURITY.md).
 
 ## License
 
-MIT
+[MIT](LICENSE)

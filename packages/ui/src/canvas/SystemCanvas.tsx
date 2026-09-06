@@ -1,37 +1,30 @@
 import {
-  Background,
-  Controls,
-  MiniMap,
-  ReactFlow,
-  ReactFlowProvider,
   addEdge,
   applyEdgeChanges,
   applyNodeChanges,
-  useNodesInitialized,
-  useReactFlow,
+  Background,
   type Connection,
+  Controls,
   type Edge,
   type EdgeChange,
+  MiniMap,
   type Node,
   type NodeChange,
-  type OnMoveEnd,
   type OnConnect,
+  type OnMoveEnd,
+  ReactFlow,
+  ReactFlowProvider,
+  useNodesInitialized,
+  useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type MouseEvent,
-} from "react";
 import type {
   ExecutionResult,
   PlaybackState,
   SystemDocument,
   SystemGraph,
 } from "@system-canvas/core";
+import { type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { applyFlowChanges } from "../adapter/from-flow.js";
 import { toFlowGraph } from "../adapter/to-flow.js";
 import { edgeTypes } from "../edges/ChannelEdge.js";
@@ -200,17 +193,14 @@ function SystemCanvasInner({
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
       if (syncingRef.current) {
-        const dimensionChanges = changes.filter(
-          (change) => change.type === "dimensions",
-        );
+        const dimensionChanges = changes.filter((change) => change.type === "dimensions");
         if (dimensionChanges.length === 0) return;
         setNodes((current) => applyNodeChanges(dimensionChanges, current));
         return;
       }
 
       const dimensionOnly =
-        changes.length > 0 &&
-        changes.every((change) => change.type === "dimensions");
+        changes.length > 0 && changes.every((change) => change.type === "dimensions");
 
       setNodes((current) => {
         const next = applyNodeChanges(changes, current);
@@ -238,10 +228,7 @@ function SystemCanvasInner({
   const onConnect: OnConnect = useCallback(
     (connection: Connection) => {
       setEdges((current) => {
-        const next = addEdge(
-          { ...connection, type: "channel", id: `ch_${Date.now()}` },
-          current,
-        );
+        const next = addEdge({ ...connection, type: "channel", id: `ch_${Date.now()}` }, current);
         emitGraphChange(nodesRef.current, next);
         return next;
       });
@@ -283,11 +270,7 @@ function SystemCanvasInner({
   );
 
   return (
-    <div
-      ref={canvasRootRef}
-      className="sc-canvas-root"
-      data-testid="architecture-canvas"
-    >
+    <div ref={canvasRootRef} className="sc-canvas-root" data-testid="architecture-canvas">
       <div className="sc-flow-legend" aria-label="Flow delivery legend">
         <span className="sc-legend-item sc-legend-sync">sync — solid, call &amp; wait</span>
         <span className="sc-legend-item sc-legend-async">async — dashed, message / event</span>

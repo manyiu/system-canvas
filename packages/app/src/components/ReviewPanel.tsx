@@ -1,4 +1,4 @@
-import { reviewLintSummary, runReviewLint, type LintIssue } from "@system-canvas/core";
+import { type LintIssue, reviewLintSummary, runReviewLint } from "@system-canvas/core";
 import { useMemo } from "react";
 import { useDocumentStore } from "../store/document-store.js";
 
@@ -20,11 +20,8 @@ export function ReviewPanel() {
     <aside className="review-panel" data-testid="review-panel">
       <div className="review-panel-header">
         <span className="review-panel-title">Architecture Review</span>
-        <span
-          className={`review-summary ${summary.passed ? "review-pass" : "review-fail"}`}
-        >
-          {summary.errors} errors · {summary.warnings} warnings · {summary.infos}{" "}
-          info
+        <span className={`review-summary ${summary.passed ? "review-pass" : "review-fail"}`}>
+          {summary.errors} errors · {summary.warnings} warnings · {summary.infos} info
         </span>
       </div>
       {issues.length === 0 ? (
@@ -38,9 +35,7 @@ export function ReviewPanel() {
             >
               <span className="review-lint-rule">{issue.ruleId}</span>
               <p className="review-lint-message">{issue.message}</p>
-              {issue.suggestion && (
-                <p className="review-lint-suggestion">{issue.suggestion}</p>
-              )}
+              {issue.suggestion && <p className="review-lint-suggestion">{issue.suggestion}</p>}
             </li>
           ))}
         </ul>

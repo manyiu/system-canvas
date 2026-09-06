@@ -1,8 +1,5 @@
 import { usePlaybackLoop } from "../hooks/usePlaybackLoop.js";
-import {
-  SCENARIO_CHIP_THRESHOLD,
-  STEP_CHIP_THRESHOLD,
-} from "../lib/playback-ui.js";
+import { SCENARIO_CHIP_THRESHOLD, STEP_CHIP_THRESHOLD } from "../lib/playback-ui.js";
 import { useDocumentStore } from "../store/document-store.js";
 
 const SPEED_OPTIONS = [
@@ -143,10 +140,7 @@ export function StepTimeline() {
                 aria-label="Seek step"
                 data-testid="playback-scrubber"
               />
-              <span
-                className="timeline-scrubber-value"
-                data-testid="playback-step-label"
-              >
+              <span className="timeline-scrubber-value" data-testid="playback-step-label">
                 {selectedStepIndex + 1}/{stepCount}
               </span>
             </label>

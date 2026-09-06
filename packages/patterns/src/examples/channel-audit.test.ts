@@ -14,8 +14,10 @@ test("example channels stay fully connected and scenario ids resolve", () => {
 
     for (const ch of graph.channels) {
       channelIds.add(ch.id);
-      if (!nodeIds.has(ch.source)) problems.push(`${meta.id}: channel ${ch.id} source ${ch.source} missing`);
-      if (!nodeIds.has(ch.target)) problems.push(`${meta.id}: channel ${ch.id} target ${ch.target} missing`);
+      if (!nodeIds.has(ch.source))
+        problems.push(`${meta.id}: channel ${ch.id} source ${ch.source} missing`);
+      if (!nodeIds.has(ch.target))
+        problems.push(`${meta.id}: channel ${ch.id} target ${ch.target} missing`);
       connected.add(ch.source);
       connected.add(ch.target);
     }
@@ -47,7 +49,9 @@ test("example channels stay fully connected and scenario ids resolve", () => {
       const payment = graph.nodes.find((n) => n.id === "PaymentService")?.position;
       const receipt = graph.nodes.find((n) => n.id === "ReceiptService")?.position;
       if (payment && receipt && receipt.x <= payment.x) {
-        problems.push("donations-website: ReceiptService should sit to the right of PaymentService");
+        problems.push(
+          "donations-website: ReceiptService should sit to the right of PaymentService",
+        );
       }
     }
 

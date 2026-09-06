@@ -1,5 +1,4 @@
 import type { ExecutionStep } from "../ast/execution.js";
-import type { Payload } from "../ast/payload.js";
 import type {
   CustomPatternDefinition,
   InvokeOutcome,
@@ -7,6 +6,7 @@ import type {
   PatternExpr,
   PatternStmt,
 } from "../ast/patterns.js";
+import type { Payload } from "../ast/payload.js";
 import type { Primitive } from "../ast/primitives.js";
 import type { VisualDirective } from "../ast/visuals.js";
 
@@ -14,17 +14,11 @@ function makeId(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function resolveBinding(
-  name: string,
-  bindings: Record<string, string>,
-): string {
+function resolveBinding(name: string, bindings: Record<string, string>): string {
   return bindings[name] ?? name;
 }
 
-function evalExpr(
-  expr: PatternExpr,
-  env: Record<string, unknown>,
-): unknown {
+function evalExpr(expr: PatternExpr, env: Record<string, unknown>): unknown {
   switch (expr.kind) {
     case "literal":
       return expr.value;
@@ -67,10 +61,7 @@ interface ExpandFrame {
   lastPayloadId?: string;
 }
 
-function createPayload(
-  type: string,
-  data: Record<string, unknown>,
-): Payload {
+function createPayload(type: string, data: Record<string, unknown>): Payload {
   return { id: makeId("payload"), type, data };
 }
 
@@ -98,10 +89,7 @@ function pushStep(
   });
 }
 
-function channelForEmit(
-  ctx: PatternExpandContext,
-  targetId: string,
-): string {
+function channelForEmit(ctx: PatternExpandContext, targetId: string): string {
   if (ctx.dlqChannelId) return ctx.dlqChannelId;
   throw new Error(
     `pattern emit to "${targetId}" requires apply binding dlqChannel ` +
@@ -163,17 +151,8 @@ function runStmts(
           ],
         });
 
-        const branch =
-          outcome === "ok" ? stmt.onSuccess : stmt.onFailure;
-        const nested = runStmts(
-          branch,
-          ctx,
-          env,
-          steps,
-          attempt,
-          outcome,
-          frame.lastPayloadId,
-        );
+        const branch = outcome === "ok" ? stmt.onSuccess : stmt.onFailure;
+        const nested = runStmts(branch, ctx, env, steps, attempt, outcome, frame.lastPayloadId);
         frame.retry = nested.retry;
         frame.done = nested.done;
         frame.lastPayloadId = nested.lastPayloadId ?? frame.lastPayloadId;
@@ -277,15 +256,11 @@ export function expandPattern(
 ): ExecutionStep[] {
   const handler = pattern.handlers.find((h) => h.event === ctx.event);
   if (!handler) {
-    throw new Error(
-      `Pattern ${pattern.name} has no onEvent handler for "${ctx.event}"`,
-    );
+    throw new Error(`Pattern ${pattern.name} has no onEvent handler for "${ctx.event}"`);
   }
 
   if (!ctx.outcomes.length) {
-    throw new Error(
-      `Pattern ${pattern.name}: apply outcomes must be a non-empty list of ok|fail`,
-    );
+    throw new Error(`Pattern ${pattern.name}: apply outcomes must be a non-empty list of ok|fail`);
   }
 
   const paramEnv: Record<string, unknown> = {};

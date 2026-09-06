@@ -6,11 +6,7 @@ export interface Payload {
   correlationId?: string;
 }
 
-export type PacketStatus =
-  | "in-flight"
-  | "delivered"
-  | "dropped"
-  | "transformed";
+export type PacketStatus = "in-flight" | "delivered" | "dropped" | "transformed";
 
 export interface PacketTrace {
   id: string;

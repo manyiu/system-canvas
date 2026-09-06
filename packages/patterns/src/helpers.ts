@@ -13,10 +13,7 @@ export function makeId(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export function createPayload(
-  type: string,
-  data: Record<string, unknown>,
-): Payload {
+export function createPayload(type: string, data: Record<string, unknown>): Payload {
   return { id: makeId("payload"), type, data };
 }
 

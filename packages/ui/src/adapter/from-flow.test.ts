@@ -113,9 +113,6 @@ describe("applyFlowChanges", () => {
     ];
 
     const updated = applyFlowChanges(corruptedGraph, [], flowEdges);
-    assert.equal(
-      updated.channels.find((channel) => channel.id === "ch2")?.label,
-      "poll",
-    );
+    assert.equal(updated.channels.find((channel) => channel.id === "ch2")?.label, "poll");
   });
 });

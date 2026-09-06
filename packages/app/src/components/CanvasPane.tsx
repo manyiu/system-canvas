@@ -23,12 +23,7 @@ export function CanvasPane() {
     if (!scenario || scenario.steps.length === 0) return null;
     const safeIndex = clampStepIndex(selectedStepIndex, scenario.steps.length);
     return executor.executeStep(document.graph, scenario, safeIndex);
-  }, [
-    document.graph,
-    document.scenarios,
-    selectedScenarioIndex,
-    selectedStepIndex,
-  ]);
+  }, [document.graph, document.scenarios, selectedScenarioIndex, selectedStepIndex]);
 
   return (
     <div className="canvas-pane">

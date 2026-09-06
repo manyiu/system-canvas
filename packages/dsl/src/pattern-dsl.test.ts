@@ -63,11 +63,7 @@ describe("pattern DSL", () => {
       assert.equal(result.snapshot?.stepIndex, i);
     }
 
-    const last = executor.executeStep(
-      doc.graph,
-      scenario,
-      scenario.steps.length - 1,
-    );
+    const last = executor.executeStep(doc.graph, scenario, scenario.steps.length - 1);
     assert.equal(last.snapshot?.nodeStates.Gateway?.lastOutcome, "ok");
   });
 

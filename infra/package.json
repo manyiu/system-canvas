@@ -1,0 +1,24 @@
+{
+  "name": "@system-canvas/infra",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy --all --require-approval never"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.268.0",
+    "constructs": "10.8.1",
+    "source-map-support": "0.5.21"
+  },
+  "devDependencies": {
+    "@types/node": "22.13.10",
+    "@types/source-map-support": "0.5.10",
+    "aws-cdk": "2.1140.0",
+    "ts-node": "10.9.2",
+    "typescript": "5.8.2"
+  }
+}

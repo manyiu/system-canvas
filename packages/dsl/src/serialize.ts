@@ -39,9 +39,7 @@ function formatValue(value: unknown): string {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     const entries = Object.entries(value as Record<string, unknown>);
     if (entries.length === 0) return "{}";
-    const inner = entries
-      .map(([k, v]) => `${k}: ${formatValue(v)}`)
-      .join(" ");
+    const inner = entries.map(([k, v]) => `${k}: ${formatValue(v)}`).join(" ");
     return `{ ${inner} }`;
   }
   return escapeString(String(value));
@@ -102,10 +100,7 @@ function serializeExpr(expr: PatternExpr): string {
   }
 }
 
-function serializePatternStmts(
-  stmts: PatternStmt[],
-  level: number,
-): string[] {
+function serializePatternStmts(stmts: PatternStmt[], level: number): string[] {
   const lines: string[] = [];
   for (const stmt of stmts) {
     switch (stmt.kind) {
@@ -127,9 +122,7 @@ function serializePatternStmts(
         break;
       }
       case "if": {
-        lines.push(
-          `${indent(level)}if (${serializeExpr(stmt.condition)}) {`,
-        );
+        lines.push(`${indent(level)}if (${serializeExpr(stmt.condition)}) {`);
         lines.push(...serializePatternStmts(stmt.then, level + 1));
         lines.push(`${indent(level)}}`);
         if (stmt.else && stmt.else.length > 0) {
@@ -143,9 +136,7 @@ function serializePatternStmts(
         lines.push(`${indent(level)}retry()`);
         break;
       case "hold": {
-        const label = stmt.label
-          ? `, label: ${escapeString(stmt.label)}`
-          : "";
+        const label = stmt.label ? `, label: ${escapeString(stmt.label)}` : "";
         lines.push(
           `${indent(level)}visual.hold(${stmt.payloadBinding}, duration: ${stmt.durationMs}${label})`,
         );
@@ -157,9 +148,7 @@ function serializePatternStmts(
         );
         break;
       case "mutate":
-        lines.push(
-          `${indent(level)}mutate ${stmt.nodeId} ${formatValue(stmt.patch)}`,
-        );
+        lines.push(`${indent(level)}mutate ${stmt.nodeId} ${formatValue(stmt.patch)}`);
         break;
     }
   }
@@ -169,14 +158,10 @@ function serializePatternStmts(
 function serializePattern(pattern: CustomPatternDefinition): string[] {
   const lines: string[] = [`${indent(1)}pattern ${pattern.name} {`];
   for (const param of pattern.params) {
-    lines.push(
-      `${indent(2)}param ${param.name} = ${formatValue(param.defaultValue)}`,
-    );
+    lines.push(`${indent(2)}param ${param.name} = ${formatValue(param.defaultValue)}`);
   }
   for (const handler of pattern.handlers) {
-    lines.push(
-      `${indent(2)}onEvent ${handler.event}(${handler.payloadBinding}) {`,
-    );
+    lines.push(`${indent(2)}onEvent ${handler.event}(${handler.payloadBinding}) {`);
     lines.push(...serializePatternStmts(handler.body, 3));
     lines.push(`${indent(2)}}`);
   }
@@ -190,30 +175,21 @@ function serializeInteraction(interaction: StepInteraction): string[] {
   const tgt = formatNodeRef(interaction.target);
   lines.push(`${indent(3)}${src} -> ${tgt}: ${interaction.label}`);
   if (interaction.annotations && interaction.annotations.length > 0) {
-    lines.push(
-      `${indent(4)}annotations: [${interaction.annotations.join(", ")}]`,
-    );
+    lines.push(`${indent(4)}annotations: [${interaction.annotations.join(", ")}]`);
   }
   return lines;
 }
 
-function serializeStep(
-  step: Scenario["steps"][number],
-  channels: Channel[],
-): string[] {
+function serializeStep(step: Scenario["steps"][number], channels: Channel[]): string[] {
   const patternTag = step.pattern ? ` [pattern: ${step.pattern}]` : "";
-  const lines: string[] = [
-    `${indent(2)}step ${escapeString(step.name)}${patternTag} {`,
-  ];
+  const lines: string[] = [`${indent(2)}step ${escapeString(step.name)}${patternTag} {`];
 
   for (const interaction of step.interactions) {
     lines.push(...serializeInteraction(interaction));
   }
 
   for (const animation of step.animations ?? []) {
-    lines.push(
-      `${indent(3)}animate payload: ${formatValue(animation.payload.data)}`,
-    );
+    lines.push(`${indent(3)}animate payload: ${formatValue(animation.payload.data)}`);
   }
 
   for (const primitive of step.primitives) {
@@ -224,9 +200,7 @@ function serializeStep(
         `${indent(3)}emit ${primitive.nodeId} -> ${target} payload ${primitive.payload.type} ${formatValue(primitive.payload.data)}`,
       );
     } else if (primitive.kind === "mutate" && step.interactions.length === 0) {
-      lines.push(
-        `${indent(3)}mutate ${primitive.nodeId} ${formatValue(primitive.patch)}`,
-      );
+      lines.push(`${indent(3)}mutate ${primitive.nodeId} ${formatValue(primitive.patch)}`);
     } else if (primitive.kind === "delay") {
       lines.push(`${indent(3)}delay ${primitive.durationMs}ms`);
     }
@@ -236,13 +210,8 @@ function serializeStep(
   return lines;
 }
 
-function serializeScenario(
-  scenario: Scenario,
-  channels: Channel[],
-): string[] {
-  const lines: string[] = [
-    `${indent(1)}scenario ${escapeString(scenario.name)} {`,
-  ];
+function serializeScenario(scenario: Scenario, channels: Channel[]): string[] {
+  const lines: string[] = [`${indent(1)}scenario ${escapeString(scenario.name)} {`];
   for (const step of scenario.steps) {
     lines.push(...serializeStep(step, channels));
   }
@@ -252,10 +221,7 @@ function serializeScenario(
 
 export function serializeDsl(doc: SystemDocument): string {
   const { graph, scenarios, patterns } = doc;
-  const lines: string[] = [
-    `system ${graph.id} ${graph.version} {`,
-    "",
-  ];
+  const lines: string[] = [`system ${graph.id} ${graph.version} {`, ""];
 
   for (const node of graph.nodes) {
     lines.push(`${indent(1)}${serializeNode(node)}`);

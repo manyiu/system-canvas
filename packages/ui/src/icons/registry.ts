@@ -137,10 +137,7 @@ const LABEL_RULES: ReadonlyArray<[RegExp, NodeIconSlug]> = [
   [/service|api/i, "microservice"],
 ];
 
-export function inferIconSlug(
-  label: string,
-  kind: NodeKind,
-): NodeIconSlug | undefined {
+export function inferIconSlug(label: string, kind: NodeKind): NodeIconSlug | undefined {
   for (const [pattern, slug] of LABEL_RULES) {
     if (pattern.test(label)) return slug;
   }
@@ -152,11 +149,7 @@ export function inferIconSlug(
   return undefined;
 }
 
-export function resolveNodeIcon(
-  icon: string | undefined,
-  kind: NodeKind,
-  label?: string,
-): string {
+export function resolveNodeIcon(icon: string | undefined, kind: NodeKind, label?: string): string {
   if (icon) {
     const mapped = NODE_ICON_SLUGS[icon as NodeIconSlug];
     if (mapped) return mapped;

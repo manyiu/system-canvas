@@ -2,10 +2,7 @@ import type { ExecutionResult, Scenario } from "../ast/execution.js";
 import type { PacketTrace } from "../ast/payload.js";
 import type { Primitive } from "../ast/primitives.js";
 import type { SystemGraph } from "../ast/system.js";
-import {
-  activeChannelIdsFromStep,
-  deriveInteractions,
-} from "./step-resolution.js";
+import { activeChannelIdsFromStep, deriveInteractions } from "./step-resolution.js";
 
 function makeTraceId(
   stepIndex: number,
@@ -58,11 +55,7 @@ function foldPriorMutates(
 }
 
 export interface Executor {
-  executeStep(
-    graph: SystemGraph,
-    scenario: Scenario,
-    stepIndex: number,
-  ): ExecutionResult;
+  executeStep(graph: SystemGraph, scenario: Scenario, stepIndex: number): ExecutionResult;
 }
 
 export function createExecutor(): Executor {
@@ -70,9 +63,7 @@ export function createExecutor(): Executor {
     executeStep(graph, scenario, stepIndex) {
       const step = scenario.steps[stepIndex];
       if (!step) {
-        throw new Error(
-          `Step ${stepIndex} not found in scenario ${scenario.id}`,
-        );
+        throw new Error(`Step ${stepIndex} not found in scenario ${scenario.id}`);
       }
 
       const nodeStates = seedNodeStates(graph, scenario);
@@ -90,9 +81,7 @@ export function createExecutor(): Executor {
         }
 
         if (primitive.kind === "emit") {
-          const channel = graph.channels.find(
-            (c) => c.id === primitive.channelId,
-          );
+          const channel = graph.channels.find((c) => c.id === primitive.channelId);
           if (!channel) {
             if (process.env.NODE_ENV !== "production") {
               console.warn(
@@ -104,8 +93,7 @@ export function createExecutor(): Executor {
           const sequence = emitSequence++;
           let payload = primitive.payload;
           const animation =
-            step.animations?.[sequence] ??
-            (emitSequence === 1 ? step.animations?.[0] : undefined);
+            step.animations?.[sequence] ?? (emitSequence === 1 ? step.animations?.[0] : undefined);
           if (animation?.payload) {
             payload = {
               ...payload,
@@ -115,17 +103,11 @@ export function createExecutor(): Executor {
                 ...payload.headers,
                 ...animation.payload.headers,
               },
-              correlationId:
-                animation.payload.correlationId ?? payload.correlationId,
+              correlationId: animation.payload.correlationId ?? payload.correlationId,
             };
           }
           traces.push({
-            id: makeTraceId(
-              stepIndex,
-              primitive.channelId,
-              payload.id,
-              sequence,
-            ),
+            id: makeTraceId(stepIndex, primitive.channelId, payload.id, sequence),
             payload,
             channelId: primitive.channelId,
             sourceNodeId: channel.source,
@@ -138,11 +120,7 @@ export function createExecutor(): Executor {
       }
 
       const resolvedInteractions = deriveInteractions(graph, step);
-      const activeChannelIds = activeChannelIdsFromStep(
-        graph,
-        step,
-        resolvedInteractions,
-      );
+      const activeChannelIds = activeChannelIdsFromStep(graph, step, resolvedInteractions);
 
       return {
         step,

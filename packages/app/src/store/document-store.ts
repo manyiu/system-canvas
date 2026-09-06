@@ -1,9 +1,5 @@
+import type { PlaybackState, SystemDocument, SystemGraph } from "@system-canvas/core";
 import { parseDsl, serializeDsl } from "@system-canvas/dsl";
-import type {
-  PlaybackState,
-  SystemDocument,
-  SystemGraph,
-} from "@system-canvas/core";
 import { getExample, listExamples } from "@system-canvas/patterns";
 import { graphNeedsLayout, layoutGraph } from "@system-canvas/ui";
 import { create } from "zustand";
@@ -42,10 +38,7 @@ interface DocumentStore {
 function withSerializedDsl(
   document: SystemDocument,
   syncSource: SyncSource,
-): Pick<
-  DocumentStore,
-  "document" | "dslText" | "parseError" | "syncSource" | "skipNextDslParse"
-> {
+): Pick<DocumentStore, "document" | "dslText" | "parseError" | "syncSource" | "skipNextDslParse"> {
   return {
     document,
     dslText: serializeDsl(document),
@@ -65,24 +58,16 @@ function ensureLaidOut(document: SystemDocument): SystemDocument {
   return { ...document, graph: layoutGraph(document.graph) };
 }
 
-function scenarioIndexForExample(
-  document: SystemDocument,
-  exampleId: string,
-): number {
+function scenarioIndexForExample(document: SystemDocument, exampleId: string): number {
   const meta = listExamples().find((e) => e.id === exampleId);
   if (!meta) return 0;
-  const index = document.scenarios.findIndex(
-    (s) => s.id === meta.defaultScenarioId,
-  );
+  const index = document.scenarios.findIndex((s) => s.id === meta.defaultScenarioId);
   return index >= 0 ? index : 0;
 }
 
 const initialExampleId = "bitly";
 const initialDoc = ensureLaidOut(getExample(initialExampleId));
-const initialScenarioIndex = scenarioIndexForExample(
-  initialDoc,
-  initialExampleId,
-);
+const initialScenarioIndex = scenarioIndexForExample(initialDoc, initialExampleId);
 
 export const useDocumentStore = create<DocumentStore>((set, get) => ({
   document: initialDoc,
@@ -226,8 +211,7 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
   },
 
   tickPlayback: () => {
-    const { document, selectedScenarioIndex, selectedStepIndex, playbackState } =
-      get();
+    const { document, selectedScenarioIndex, selectedStepIndex, playbackState } = get();
     if (playbackState !== "playing") return;
 
     const scenario = document.scenarios[selectedScenarioIndex];

@@ -15,10 +15,7 @@ const PACKET_BUDGET = 0.65;
 const SYNC_FACTOR = 0.85;
 const STAGGER_MS = 80;
 
-export function formatPacketLabel(
-  payloadType: string,
-  data?: Record<string, unknown>,
-): string {
+export function formatPacketLabel(payloadType: string, data?: Record<string, unknown>): string {
   if (!data) return payloadType;
   for (const key of Object.keys(data)) {
     const value = data[key];
@@ -42,16 +39,11 @@ export function buildPacketFlights(
 ): PacketFlight[] {
   const dwell = stepDwellMs(playbackSpeed);
   const baseMs = dwell * PACKET_BUDGET;
-  const durationMs =
-    delivery === "sync" ? baseMs * SYNC_FACTOR : baseMs;
-  const playState =
-    playbackState === "paused" ? "paused" : "running";
+  const durationMs = delivery === "sync" ? baseMs * SYNC_FACTOR : baseMs;
+  const playState = playbackState === "paused" ? "paused" : "running";
 
   return traces
-    .filter(
-      (trace) =>
-        trace.channelId === channelId && trace.status === "in-flight",
-    )
+    .filter((trace) => trace.channelId === channelId && trace.status === "in-flight")
     .map((trace, index) => ({
       id: trace.id,
       channelId: trace.channelId,

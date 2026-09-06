@@ -45,10 +45,7 @@ export function createTimelineController(scenario: Scenario): TimelineController
     },
 
     seek(step: number) {
-      timeline.currentStep = Math.max(
-        0,
-        Math.min(step, timeline.totalSteps - 1),
-      );
+      timeline.currentStep = Math.max(0, Math.min(step, timeline.totalSteps - 1));
       timeline.playbackState = "paused";
     },
 

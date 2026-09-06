@@ -1,11 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import {
-  buildPacketFlights,
-  formatPacketLabel,
-  stepDwellMs,
-} from "./packet-flight.ts";
 import type { PacketTrace } from "@system-canvas/core";
+import { buildPacketFlights, formatPacketLabel, stepDwellMs } from "./packet-flight.ts";
 
 const trace: PacketTrace = {
   id: "0:ch1:p0:0",
@@ -20,10 +16,7 @@ const trace: PacketTrace = {
 
 describe("packet-flight", () => {
   it("formats payload labels with a key field", () => {
-    assert.equal(
-      formatPacketLabel("PlaceOrder", { orderId: 101 }),
-      "PlaceOrder · orderId=101",
-    );
+    assert.equal(formatPacketLabel("PlaceOrder", { orderId: 101 }), "PlaceOrder · orderId=101");
     assert.equal(formatPacketLabel("OrderCreated"), "OrderCreated");
   });
 

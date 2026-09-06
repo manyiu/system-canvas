@@ -1,6 +1,4 @@
 import type { Payload } from "./payload.js";
-import type { Primitive } from "./primitives.js";
-import type { VisualDirective } from "./visuals.js";
 
 export type NodeRef = string | { nodeId: string; portId?: string };
 

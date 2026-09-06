@@ -56,9 +56,7 @@ export function formatChannelLabel(
   label?: string,
   relationship?: RelationshipKind,
 ): string | undefined {
-  const canonical = label
-    ? stripChannelLabelPrefix(label, delivery, relationship)
-    : undefined;
+  const canonical = label ? stripChannelLabelPrefix(label, delivery, relationship) : undefined;
 
   const parts: string[] = [];
   if (delivery) parts.push(delivery);
@@ -75,9 +73,7 @@ export function compactChannelLabel(
   label?: string,
   relationship?: RelationshipKind,
 ): string | undefined {
-  const canonical = label
-    ? stripChannelLabelPrefix(label, delivery, relationship)
-    : undefined;
+  const canonical = label ? stripChannelLabelPrefix(label, delivery, relationship) : undefined;
   if (relationship) return relationship;
   if (canonical) return canonical;
   if (delivery) return delivery;
@@ -91,14 +87,7 @@ export function resolveChannelEdgeLabel(options: {
   label?: string;
   relationship?: RelationshipKind;
 }): string | undefined {
-  const expanded = formatChannelLabel(
-    options.delivery,
-    options.label,
-    options.relationship,
-  );
+  const expanded = formatChannelLabel(options.delivery, options.label, options.relationship);
   if (options.highlighted || options.selected) return expanded;
-  return (
-    compactChannelLabel(options.delivery, options.label, options.relationship) ??
-    expanded
-  );
+  return compactChannelLabel(options.delivery, options.label, options.relationship) ?? expanded;
 }

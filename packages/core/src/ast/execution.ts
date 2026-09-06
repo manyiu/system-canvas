@@ -1,5 +1,5 @@
-import type { PacketTrace } from "./payload.js";
 import type { StepAnimation, StepInteraction } from "./interaction.js";
+import type { PacketTrace } from "./payload.js";
 import type { Primitive } from "./primitives.js";
 import type { VisualDirective } from "./visuals.js";
 

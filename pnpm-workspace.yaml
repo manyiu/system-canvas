@@ -1,5 +1,6 @@
 packages:
   - "packages/*"
+  - "infra"
 minimumReleaseAgeExclude:
-  - '@xyflow/react@12.11.6'
-  - '@xyflow/system@0.0.82'
+  - "@xyflow/react@12.11.6"
+  - "@xyflow/system@0.0.82"

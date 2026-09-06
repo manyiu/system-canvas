@@ -1,6 +1,6 @@
-import { Handle, Position, type NodeProps } from "@xyflow/react";
-import type { CSSProperties } from "react";
 import type { HandlePosition, NodeKind } from "@system-canvas/core";
+import { Handle, type NodeProps, Position } from "@xyflow/react";
+import type { CSSProperties } from "react";
 import { resolveNodeIcon } from "../icons/registry.js";
 import type { NodeVisualStyle } from "../visuals/apply-directives.js";
 
@@ -47,8 +47,20 @@ export function BaseSystemNode({ data, selected, type }: NodeProps) {
   return (
     <div className="sc-node" style={style}>
       {HANDLE_SIDES.flatMap(({ id, position, className }) => [
-        <Handle key={`${id}-target`} type="target" id={id} position={position} className={className} />,
-        <Handle key={`${id}-source`} type="source" id={id} position={position} className={className} />,
+        <Handle
+          key={`${id}-target`}
+          type="target"
+          id={id}
+          position={position}
+          className={className}
+        />,
+        <Handle
+          key={`${id}-source`}
+          type="source"
+          id={id}
+          position={position}
+          className={className}
+        />,
       ])}
       <div className="sc-node-header">
         <span className="sc-node-icon">{icon}</span>
@@ -80,9 +92,7 @@ export function BaseSystemNode({ data, selected, type }: NodeProps) {
           ))}
         </div>
       )}
-      {visual?.badge && (
-        <div className="sc-node-badge">{visual.badge}</div>
-      )}
+      {visual?.badge && <div className="sc-node-badge">{visual.badge}</div>}
     </div>
   );
 }
