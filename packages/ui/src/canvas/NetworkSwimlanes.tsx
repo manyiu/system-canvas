@@ -1,4 +1,4 @@
-import { Panel, useNodesInitialized } from "@xyflow/react";
+import { ViewportPortal, useNodesInitialized } from "@xyflow/react";
 import { useMemo } from "react";
 import type { Network, SystemGraph, SystemNode } from "@system-canvas/core";
 
@@ -44,7 +44,7 @@ export function NetworkSwimlanesOverlay({ graph }: { graph: SystemGraph }) {
   if (!nodesInitialized || lanes.length === 0) return null;
 
   return (
-    <Panel position="top-left" className="sc-swimlanes-panel">
+    <ViewportPortal>
       <svg className="sc-swimlanes-svg" aria-hidden="true">
         {lanes.map(({ network, x, y, width, height }) => (
           <g key={network.id}>
@@ -62,6 +62,6 @@ export function NetworkSwimlanesOverlay({ graph }: { graph: SystemGraph }) {
           </g>
         ))}
       </svg>
-    </Panel>
+    </ViewportPortal>
   );
 }

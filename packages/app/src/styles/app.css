@@ -539,22 +539,14 @@ body,
   color: #94a3b8;
 }
 
-.sc-swimlanes-panel {
-  pointer-events: none;
-  z-index: 0;
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-}
-
 .sc-swimlanes-svg {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  width: 0;
+  height: 0;
   overflow: visible;
   pointer-events: none;
+  /* ViewportPortal mounts after NodeRenderer; keep lanes behind nodes */
+  z-index: -1;
 }
 
 .sc-swimlane-rect {
