@@ -6,6 +6,10 @@ export interface GithubOidcStackProps extends cdk.StackProps {
   githubOrg: string;
   githubRepo: string;
   githubBranch: string;
+  /** GitHub numeric owner id (for ID-qualified OIDC subject claims). */
+  githubOwnerId: string;
+  /** GitHub numeric repository id (for ID-qualified OIDC subject claims). */
+  githubRepoId: string;
   /** Deterministic site bucket name used by the site stack and S3 sync. */
   siteBucketName: string;
   /**
@@ -30,34 +34,27 @@ export class GithubOidcStack extends cdk.Stack {
       props.githubOidcProviderArn ??
       `arn:aws:iam::${this.account}:oidc-provider/token.actions.githubusercontent.com`;
 
-    const subMain = `repo:${props.githubOrg}/${props.githubRepo}:ref:refs/heads/${props.githubBranch}`;
-    const subEnvironment = `repo:${props.githubOrg}/${props.githubRepo}:environment:production`;
+    // GitHub may emit either classic `repo:org/name:…` or ID-qualified
+    // `repo:org@id/name@id:…` subject claims (see existing PlaylangWebDeploy trust).
+    const subPatterns = [
+      `repo:${props.githubOrg}/${props.githubRepo}:*`,
+      `repo:${props.githubOrg}@${props.githubOwnerId}/${props.githubRepo}@${props.githubRepoId}:*`,
+    ];
 
-    // Two statements (OR): JWT `sub` is single-valued, so ForAnyValue does not work.
     this.deployRole = new iam.Role(this, "GithubActionsDeployRole", {
       roleName: "system-canvas-github-deploy",
-      description: "Deploy System Canvas from GitHub Actions (OIDC, main / production env)",
-      assumedBy: new iam.CompositePrincipal(
-        new iam.FederatedPrincipal(
-          providerArn,
-          {
-            StringEquals: {
-              "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-              "token.actions.githubusercontent.com:sub": subMain,
-            },
+      description: "Deploy System Canvas from GitHub Actions (OIDC, manyiu/system-canvas)",
+      assumedBy: new iam.FederatedPrincipal(
+        providerArn,
+        {
+          StringEquals: {
+            "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
           },
-          "sts:AssumeRoleWithWebIdentity",
-        ),
-        new iam.FederatedPrincipal(
-          providerArn,
-          {
-            StringEquals: {
-              "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-              "token.actions.githubusercontent.com:sub": subEnvironment,
-            },
+          StringLike: {
+            "token.actions.githubusercontent.com:sub": subPatterns,
           },
-          "sts:AssumeRoleWithWebIdentity",
-        ),
+        },
+        "sts:AssumeRoleWithWebIdentity",
       ),
       maxSessionDuration: cdk.Duration.hours(1),
     });
