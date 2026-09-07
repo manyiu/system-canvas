@@ -33,21 +33,31 @@ export class GithubOidcStack extends cdk.Stack {
     const subMain = `repo:${props.githubOrg}/${props.githubRepo}:ref:refs/heads/${props.githubBranch}`;
     const subEnvironment = `repo:${props.githubOrg}/${props.githubRepo}:environment:production`;
 
+    // Two statements (OR): JWT `sub` is single-valued, so ForAnyValue does not work.
     this.deployRole = new iam.Role(this, "GithubActionsDeployRole", {
       roleName: "system-canvas-github-deploy",
       description: "Deploy System Canvas from GitHub Actions (OIDC, main / production env)",
-      assumedBy: new iam.FederatedPrincipal(
-        providerArn,
-        {
-          StringEquals: {
-            "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+      assumedBy: new iam.CompositePrincipal(
+        new iam.FederatedPrincipal(
+          providerArn,
+          {
+            StringEquals: {
+              "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+              "token.actions.githubusercontent.com:sub": subMain,
+            },
           },
-          // ForAnyValue: either main ref OR production environment subject may match.
-          "ForAnyValue:StringEquals": {
-            "token.actions.githubusercontent.com:sub": [subMain, subEnvironment],
+          "sts:AssumeRoleWithWebIdentity",
+        ),
+        new iam.FederatedPrincipal(
+          providerArn,
+          {
+            StringEquals: {
+              "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+              "token.actions.githubusercontent.com:sub": subEnvironment,
+            },
           },
-        },
-        "sts:AssumeRoleWithWebIdentity",
+          "sts:AssumeRoleWithWebIdentity",
+        ),
       ),
       maxSessionDuration: cdk.Duration.hours(1),
     });
