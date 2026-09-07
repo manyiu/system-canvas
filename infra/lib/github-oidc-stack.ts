@@ -36,15 +36,20 @@ export class GithubOidcStack extends cdk.Stack {
       providerArn,
     );
 
-    const sub = `repo:${props.githubOrg}/${props.githubRepo}:ref:refs/heads/${props.githubBranch}`;
+    const subMain = `repo:${props.githubOrg}/${props.githubRepo}:ref:refs/heads/${props.githubBranch}`;
+    const subEnvironment = `repo:${props.githubOrg}/${props.githubRepo}:environment:production`;
 
     this.deployRole = new iam.Role(this, "GithubActionsDeployRole", {
       roleName: "system-canvas-github-deploy",
-      description: "Deploy System Canvas from GitHub Actions (OIDC, main only)",
+      description: "Deploy System Canvas from GitHub Actions (OIDC, main / production env)",
       assumedBy: new iam.OpenIdConnectPrincipal(provider, {
         StringEquals: {
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-          "token.actions.githubusercontent.com:sub": sub,
+        },
+        // Jobs with `environment: production` use environment:… subject claims;
+        // plain push jobs use ref:refs/heads/main. Allow both; env is branch-gated in GitHub.
+        StringLike: {
+          "token.actions.githubusercontent.com:sub": [subMain, subEnvironment],
         },
       }),
       maxSessionDuration: cdk.Duration.hours(1),
