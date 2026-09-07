@@ -1,0 +1,17 @@
+title = "system-canvas"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Build artifacts and lockfiles"
+paths = [
+  '''(^|/)infra/cdk\.out(/|$)''',
+  '''(^|/)cdk\.out(/|$)''',
+  '''(^|/)node_modules(/|$)''',
+  '''(^|/)dist(/|$)''',
+  '''(^|/)\.turbo(/|$)''',
+  '''(^|/)pnpm-lock\.yaml$''',
+  '''(^|/)playwright-report(/|$)''',
+  '''(^|/)test-results(/|$)''',
+]

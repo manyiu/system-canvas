@@ -48,7 +48,8 @@ export function shouldAnimateChannel(
   delivery: FlowDelivery | undefined,
   highlighted: boolean,
 ): boolean {
-  return highlighted && delivery === "async";
+  void delivery;
+  return highlighted;
 }
 
 export function formatChannelLabel(

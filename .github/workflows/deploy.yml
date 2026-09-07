@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     environment: production
+    # Skip until operator bootstrap sets AWS_ROLE_ARN (see infra/README.md).
+    if: ${{ vars.AWS_ROLE_ARN != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
