@@ -30,28 +30,25 @@ export class GithubOidcStack extends cdk.Stack {
       props.githubOidcProviderArn ??
       `arn:aws:iam::${this.account}:oidc-provider/token.actions.githubusercontent.com`;
 
-    const provider = iam.OpenIdConnectProvider.fromOpenIdConnectProviderArn(
-      this,
-      "GithubOidcProvider",
-      providerArn,
-    );
-
     const subMain = `repo:${props.githubOrg}/${props.githubRepo}:ref:refs/heads/${props.githubBranch}`;
     const subEnvironment = `repo:${props.githubOrg}/${props.githubRepo}:environment:production`;
 
     this.deployRole = new iam.Role(this, "GithubActionsDeployRole", {
       roleName: "system-canvas-github-deploy",
       description: "Deploy System Canvas from GitHub Actions (OIDC, main / production env)",
-      assumedBy: new iam.OpenIdConnectPrincipal(provider, {
-        StringEquals: {
-          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+      assumedBy: new iam.FederatedPrincipal(
+        providerArn,
+        {
+          StringEquals: {
+            "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+          },
+          // ForAnyValue: either main ref OR production environment subject may match.
+          "ForAnyValue:StringEquals": {
+            "token.actions.githubusercontent.com:sub": [subMain, subEnvironment],
+          },
         },
-        // Jobs with `environment: production` use environment:… subject claims;
-        // plain push jobs use ref:refs/heads/main. Allow both; env is branch-gated in GitHub.
-        StringLike: {
-          "token.actions.githubusercontent.com:sub": [subMain, subEnvironment],
-        },
-      }),
+        "sts:AssumeRoleWithWebIdentity",
+      ),
       maxSessionDuration: cdk.Duration.hours(1),
     });
 
