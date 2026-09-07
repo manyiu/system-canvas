@@ -31,7 +31,7 @@ jobs:
           ./gitleaks detect --source . --verbose --redact --no-git --config .gitleaks.toml
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           package_json_file: package.json
 
