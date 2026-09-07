@@ -8,10 +8,16 @@ export interface GithubOidcStackProps extends cdk.StackProps {
   githubBranch: string;
   /** Deterministic site bucket name used by the site stack and S3 sync. */
   siteBucketName: string;
+  /**
+   * Existing IAM OIDC provider ARN for GitHub Actions.
+   * Defaults to the account-level token.actions.githubusercontent.com provider.
+   */
+  githubOidcProviderArn?: string;
 }
 
 /**
- * GitHub Actions OIDC provider + least-privilege deploy role.
+ * GitHub Actions OIDC deploy role.
+ * Reuses the account's existing GitHub OIDC provider (IAM allows only one per URL).
  * Trust is pinned to a single repository branch (trunk-based main).
  */
 export class GithubOidcStack extends cdk.Stack {
@@ -20,10 +26,15 @@ export class GithubOidcStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: GithubOidcStackProps) {
     super(scope, id, props);
 
-    const provider = new iam.OpenIdConnectProvider(this, "GithubOidcProvider", {
-      url: "https://token.actions.githubusercontent.com",
-      clientIds: ["sts.amazonaws.com"],
-    });
+    const providerArn =
+      props.githubOidcProviderArn ??
+      `arn:aws:iam::${this.account}:oidc-provider/token.actions.githubusercontent.com`;
+
+    const provider = iam.OpenIdConnectProvider.fromOpenIdConnectProviderArn(
+      this,
+      "GithubOidcProvider",
+      providerArn,
+    );
 
     const sub = `repo:${props.githubOrg}/${props.githubRepo}:ref:refs/heads/${props.githubBranch}`;
 

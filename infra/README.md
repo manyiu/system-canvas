@@ -33,11 +33,15 @@ Run these from `infra/` (or use `pnpm --filter @system-canvas/infra exec cdk ...
 
 ### 2. Deploy the OIDC stack first
 
+This account already has a GitHub OIDC provider (`token.actions.githubusercontent.com`).
+The stack **reuses** that provider and only creates the deploy role.
+
 ```bash
 cd infra
 npx cdk deploy SystemCanvasGithubOidc \
   -c account="$AWS_ACCOUNT_ID" \
-  -c hostedZoneId="$HOSTED_ZONE_ID"
+  -c hostedZoneId="$HOSTED_ZONE_ID" \
+  -c siteRegion=ap-southeast-1
 ```
 
 Note the **DeployRoleArn** output.

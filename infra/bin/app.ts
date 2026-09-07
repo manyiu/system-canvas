@@ -24,9 +24,7 @@ const githubRepo = (app.node.tryGetContext("githubRepo") as string | undefined) 
 const githubBranch = (app.node.tryGetContext("githubBranch") as string | undefined) ?? "main";
 
 const siteRegion =
-  (app.node.tryGetContext("siteRegion") as string | undefined) ??
-  process.env.CDK_DEFAULT_REGION ??
-  "ap-southeast-1";
+  (app.node.tryGetContext("siteRegion") as string | undefined) ?? "ap-southeast-1";
 
 if (!account) {
   throw new Error(
