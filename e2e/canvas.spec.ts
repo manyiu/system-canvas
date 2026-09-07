@@ -145,7 +145,7 @@ test.describe("Architecture Canvas", () => {
 
   test("serialized DSL includes channel definitions", async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-    await page.getByRole("button", { name: "Copy DSL" }).click();
+    await page.getByTestId("copy-dsl").click();
 
     await waitForClipboardText(page, "channel ch1 Client -> CDN");
     const dsl = await page.evaluate(async () => navigator.clipboard.readText());
@@ -282,7 +282,7 @@ test.describe("Architecture Canvas", () => {
     expect(box).not.toBeNull();
 
     async function readDslFromClipboard() {
-      await page.getByRole("button", { name: "Copy DSL" }).click();
+      await page.getByTestId("copy-dsl").click();
       return page.evaluate(async () => navigator.clipboard.readText());
     }
 
