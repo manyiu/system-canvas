@@ -1,5 +1,5 @@
-import { serializeDsl } from "@system-canvas/dsl";
 import Editor from "@monaco-editor/react";
+import { serializeDsl } from "@system-canvas/dsl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDocumentStore } from "../store/document-store.js";
 

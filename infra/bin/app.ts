@@ -22,13 +22,10 @@ const hostedZoneName =
 const githubOrg = (app.node.tryGetContext("githubOrg") as string | undefined) ?? "manyiu";
 const githubRepo = (app.node.tryGetContext("githubRepo") as string | undefined) ?? "system-canvas";
 const githubBranch = (app.node.tryGetContext("githubBranch") as string | undefined) ?? "main";
-const githubOwnerId =
-  (app.node.tryGetContext("githubOwnerId") as string | undefined) ?? "11912398";
-const githubRepoId =
-  (app.node.tryGetContext("githubRepoId") as string | undefined) ?? "1359331343";
+const githubOwnerId = (app.node.tryGetContext("githubOwnerId") as string | undefined) ?? "11912398";
+const githubRepoId = (app.node.tryGetContext("githubRepoId") as string | undefined) ?? "1359331343";
 
-const siteRegion =
-  (app.node.tryGetContext("siteRegion") as string | undefined) ?? "ap-southeast-1";
+const siteRegion = (app.node.tryGetContext("siteRegion") as string | undefined) ?? "ap-southeast-1";
 
 if (!account) {
   throw new Error(
