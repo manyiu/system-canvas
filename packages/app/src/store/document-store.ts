@@ -17,7 +17,6 @@ interface DocumentStore {
   selectedStepIndex: number;
   playbackState: PlaybackState;
   playbackSpeed: number;
-  skipNextDslParse: boolean;
 
   setFromDsl: (text: string) => void;
   setFromCanvas: (graph: SystemGraph) => void;
@@ -32,19 +31,17 @@ interface DocumentStore {
   stepForward: () => void;
   stepBack: () => void;
   tickPlayback: () => void;
-  resetSkipDslParse: () => void;
 }
 
 function withSerializedDsl(
   document: SystemDocument,
   syncSource: SyncSource,
-): Pick<DocumentStore, "document" | "dslText" | "parseError" | "syncSource" | "skipNextDslParse"> {
+): Pick<DocumentStore, "document" | "dslText" | "parseError" | "syncSource"> {
   return {
     document,
     dslText: serializeDsl(document),
     parseError: null,
     syncSource,
-    skipNextDslParse: syncSource === "canvas" || syncSource === "pattern",
   };
 }
 
@@ -79,7 +76,6 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
   selectedStepIndex: 0,
   playbackState: "idle",
   playbackSpeed: 1,
-  skipNextDslParse: false,
 
   setFromDsl: (text) => {
     try {
@@ -92,7 +88,6 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
         parseError: null,
         syncSource: "dsl",
         loadedExampleId: null,
-        skipNextDslParse: false,
         selectedScenarioIndex: 0,
         selectedStepIndex: 0,
         playbackState: "idle",
@@ -230,10 +225,6 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
       selectedStepIndex: selectedStepIndex + 1,
       syncSource: "init",
     });
-  },
-
-  resetSkipDslParse: () => {
-    set({ skipNextDslParse: false });
   },
 }));
 
