@@ -12,7 +12,6 @@ export function DslEditor() {
   const parseError = useDocumentStore((s) => s.parseError);
   const syncSource = useDocumentStore((s) => s.syncSource);
   const setFromDsl = useDocumentStore((s) => s.setFromDsl);
-  const resetSkipDslParse = useDocumentStore((s) => s.resetSkipDslParse);
 
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -36,14 +35,7 @@ export function DslEditor() {
   const handleChange = useCallback(
     (value: string | undefined) => {
       const text = value ?? "";
-      const { dslText: currentText, skipNextDslParse } = useDocumentStore.getState();
-
-      if (skipNextDslParse) {
-        if (text === currentText) {
-          resetSkipDslParse();
-        }
-        return;
-      }
+      const { dslText: currentText } = useDocumentStore.getState();
 
       if (!text.trim() || text === currentText) {
         return;
@@ -55,7 +47,7 @@ export function DslEditor() {
         setFromDsl(text);
       }, DEBOUNCE_MS);
     },
-    [setFromDsl, resetSkipDslParse],
+    [setFromDsl],
   );
 
   const copyDsl = useCallback(async () => {

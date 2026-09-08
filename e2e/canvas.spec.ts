@@ -53,6 +53,35 @@ async function selectExample(page: Page, id: string) {
   await page.getByTestId(`example-item-${id}`).click();
 }
 
+/** Edit System DSL in Monaco so the editor onChange path runs (debounce → setFromDsl). */
+async function replaceDslText(page: Page, find: string, replacement: string) {
+  await page.waitForFunction(() => {
+    const monaco = (window as unknown as { monaco?: { editor: { getModels: () => unknown[] } } })
+      .monaco;
+    return (monaco?.editor.getModels().length ?? 0) > 0;
+  });
+
+  await page.evaluate(
+    ({ find, replacement }) => {
+      const model = (
+        window as unknown as {
+          monaco: {
+            editor: {
+              getModels: () => Array<{ getValue: () => string; setValue: (value: string) => void }>;
+            };
+          };
+        }
+      ).monaco.editor.getModels()[0];
+      const current = model.getValue();
+      if (!current.includes(find)) {
+        throw new Error(`DSL substring not found: ${find}`);
+      }
+      model.setValue(current.replace(find, replacement));
+    },
+    { find, replacement },
+  );
+}
+
 test.describe("Architecture Canvas", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
@@ -307,6 +336,32 @@ test.describe("Architecture Canvas", () => {
     expect(afterDsl).toContain('label: "lookup"');
     expect(afterDsl).toContain('label: "persist"');
     expect(afterDsl.length).toBeLessThanOrEqual(initialDsl.length + 120);
+  });
+
+  test("DSL edits update canvas after example switch and node drag", async ({ page }) => {
+    const canvas = page.getByTestId("architecture-canvas");
+
+    // Pattern sync previously left skipNextDslParse stuck true (Monaco suppresses echo onChange).
+    await selectExample(page, "rate-limiter");
+    await waitForCanvasReady(page);
+    await expect(
+      canvas.locator('.react-flow__node[data-id="RateLimiterService"] .sc-node-label'),
+    ).toHaveText("Rate Limiter");
+
+    // Canvas sync was the other path that set the stuck flag.
+    const node = canvas.locator('.react-flow__node[data-id="RateLimiterService"]');
+    const box = await node.boundingBox();
+    expect(box).not.toBeNull();
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box!.x + 60, box!.y + 30, { steps: 10 });
+    await page.mouse.up();
+
+    await replaceDslText(page, 'label: "Rate Limiter"', 'label: "Renamed Limiter"');
+
+    await expect(
+      canvas.locator('.react-flow__node[data-id="RateLimiterService"] .sc-node-label'),
+    ).toHaveText("Renamed Limiter", { timeout: 5_000 });
   });
 
   test("review panel renders for examples", async ({ page }) => {
