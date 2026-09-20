@@ -18,7 +18,7 @@
     "dev": "tsdown --watch"
   },
   "dependencies": {
-    "@dagrejs/dagre": "1.1.5",
+    "@dagrejs/dagre": "3.1.1",
     "@system-canvas/core": "workspace:*",
     "@xyflow/react": "12.11.6"
   },
