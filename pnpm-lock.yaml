@@ -116,8 +116,8 @@ importers:
         specifier: 1.55.0
         version: 1.55.0
       '@types/node':
-        specifier: 26.4.0
-        version: 26.4.0
+        specifier: 26.6.1
+        version: 26.6.1
       aws-cdk:
         specifier: ^2.1140.0
         version: 2.1140.0
@@ -141,8 +141,8 @@ importers:
         version: 0.5.21
     devDependencies:
       '@types/node':
-        specifier: 22.13.10
-        version: 22.13.10
+        specifier: 26.6.1
+        version: 26.6.1
       '@types/source-map-support':
         specifier: 0.5.10
         version: 0.5.10
@@ -151,7 +151,7 @@ importers:
         version: 2.1140.0
       ts-node:
         specifier: 10.9.2
-        version: 10.9.2(@types/node@22.13.10)(typescript@5.8.2)
+        version: 10.9.2(@types/node@26.6.1)(typescript@5.8.2)
       typescript:
         specifier: 5.8.2
         version: 5.8.2
@@ -194,13 +194,13 @@ importers:
         version: 19.2.3(@types/react@19.2.8)
       '@vitejs/plugin-react':
         specifier: 6.1.1
-        version: 6.1.1(vite@8.2.2(@types/node@26.4.0))
+        version: 6.1.1(vite@8.2.2(@types/node@26.6.1))
       typescript:
         specifier: 7.0.2
         version: 7.0.2
       vite:
         specifier: 8.2.2
-        version: 8.2.2(@types/node@26.4.0)
+        version: 8.2.2(@types/node@26.6.1)
 
   packages/core:
     devDependencies:
@@ -548,11 +548,8 @@ packages:
   '@types/d3-zoom@3.0.8':
     resolution: {integrity: sha512-iqMC4/YlFCSlO8+2Ii1GGGliCAY4XdeG748w5vQUbevlbDu0zSjH/+jojorQVBK/se0j6DUFNPBGSqD3YWYnDw==}
 
-  '@types/node@22.13.10':
-    resolution: {integrity: sha512-I6LPUvlRH+O6VRUqYOcMudhaIdUVWfsjnZavnsraHvpBwaEyMN29ry+0UVJhImYL16xsscu0aske3yA+uPOWfw==}
-
-  '@types/node@26.4.0':
-    resolution: {integrity: sha512-faiGnoIrLH/V8cibOMEAZ8pMw6oXqSukl29ra4mN8GdaB2ZewzeaLj+INpV5N+Z1eKWzY+IzaIZH2EIR6YZRNQ==}
+  '@types/node@26.6.1':
+    resolution: {integrity: sha512-VqGJBMCtdhqkBUCcBLvywI0NJ+KLuVzgNnlBUNFOQjqVxzo2lxLUNg1DSey8+u2u6ktswSAxg+s68QLzWHNOuA==}
 
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
@@ -1275,11 +1272,8 @@ packages:
   unconfig-core@7.5.0:
     resolution: {integrity: sha512-Su3FauozOGP44ZmKdHy2oE6LPjk51M/TRRjHv2HNCWiDvfvCoxC2lno6jevMA91MYAdCdwP05QnWdWpSbncX/w==}
 
-  undici-types@6.20.0:
-    resolution: {integrity: sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==}
-
-  undici-types@8.3.0:
-    resolution: {integrity: sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==}
+  undici-types@8.9.0:
+    resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
   use-sync-external-store@1.6.0:
     resolution: {integrity: sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==}
@@ -1563,13 +1557,9 @@ snapshots:
       '@types/d3-interpolate': 3.0.4
       '@types/d3-selection': 3.0.11
 
-  '@types/node@22.13.10':
+  '@types/node@26.6.1':
     dependencies:
-      undici-types: 6.20.0
-
-  '@types/node@26.4.0':
-    dependencies:
-      undici-types: 8.3.0
+      undici-types: 8.9.0
 
   '@types/react-dom@19.2.3(@types/react@19.2.8)':
     dependencies:
@@ -1646,10 +1636,10 @@ snapshots:
   '@typescript/typescript-win32-x64@7.0.2':
     optional: true
 
-  '@vitejs/plugin-react@6.1.1(vite@8.2.2(@types/node@26.4.0))':
+  '@vitejs/plugin-react@6.1.1(vite@8.2.2(@types/node@26.6.1))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
-      vite: 8.2.2(@types/node@26.4.0)
+      vite: 8.2.2(@types/node@26.6.1)
 
   '@xyflow/react@12.11.6(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
@@ -2009,14 +1999,14 @@ snapshots:
 
   tree-kill@1.2.2: {}
 
-  ts-node@10.9.2(@types/node@22.13.10)(typescript@5.8.2):
+  ts-node@10.9.2(@types/node@26.6.1)(typescript@5.8.2):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.13
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
-      '@types/node': 22.13.10
+      '@types/node': 26.6.1
       acorn: 8.18.0
       acorn-walk: 8.3.5
       arg: 4.1.3
@@ -2091,9 +2081,7 @@ snapshots:
       '@quansync/fs': 1.0.0
       quansync: 1.0.0
 
-  undici-types@6.20.0: {}
-
-  undici-types@8.3.0: {}
+  undici-types@8.9.0: {}
 
   use-sync-external-store@1.6.0(react@19.2.8):
     dependencies:
@@ -2103,7 +2091,7 @@ snapshots:
 
   verkit@0.3.2: {}
 
-  vite@8.2.2(@types/node@26.4.0):
+  vite@8.2.2(@types/node@26.6.1):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.7
@@ -2111,7 +2099,7 @@ snapshots:
       rolldown: 1.2.6
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@types/node': 26.4.0
+      '@types/node': 26.6.1
       fsevents: 2.3.3
 
   yn@3.1.1: {}

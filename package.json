@@ -21,7 +21,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.3.11",
     "@playwright/test": "1.55.0",
-    "@types/node": "26.4.0",
+    "@types/node": "26.6.1",
     "aws-cdk": "^2.1140.0",
     "turbo": "2.10.12",
     "typescript": "7.0.2"
