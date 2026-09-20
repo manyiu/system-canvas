@@ -23,7 +23,7 @@
     "@playwright/test": "1.55.0",
     "@types/node": "26.4.0",
     "aws-cdk": "^2.1140.0",
-    "turbo": "2.10.12",
+    "turbo": "2.10.13",
     "typescript": "7.0.2"
   }
 }
